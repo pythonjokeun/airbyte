@@ -499,14 +499,13 @@ class CsvReaderTest(unittest.TestCase):
         assert f"{self._CONFIG_NAME}_config_dialect" not in csv.list_dialects()
 
     def _read_data(self) -> Generator[Dict[str, str], None, None]:
-        data_generator = self._csv_reader.read_data(
+        return self._csv_reader.read_data(
             self._config,
             self._file,
             self._stream_reader,
             self._logger,
             FileReadMode.READ,
         )
-        return data_generator
 
 
 def test_encoding_is_passed_to_stream_reader() -> None:

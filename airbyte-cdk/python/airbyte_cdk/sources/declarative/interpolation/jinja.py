@@ -71,13 +71,11 @@ class JinjaInterpolation(Interpolation):
                 context[alias] = context[equivalent]
 
         try:
-            if isinstance(input_str, str):
-                result = self._eval(input_str, context)
-                if result:
-                    return self._literal_eval(result)
-            else:
+            if not isinstance(input_str, str):
                 # If input is not a string, return it as is
                 raise Exception(f"Expected a string. got {input_str}")
+            if result := self._eval(input_str, context):
+                return self._literal_eval(result)
         except UndefinedError:
             pass
         # If result is empty or resulted in an undefined error, evaluate and return the default string
@@ -93,8 +91,9 @@ class JinjaInterpolation(Interpolation):
         try:
             ast = self._environment.parse(s)
             undeclared = meta.find_undeclared_variables(ast)
-            undeclared_not_in_context = {var for var in undeclared if var not in context}
-            if undeclared_not_in_context:
+            if undeclared_not_in_context := {
+                var for var in undeclared if var not in context
+            }:
                 raise ValueError(f"Jinja macro has undeclared variables: {undeclared_not_in_context}. Context: {context}")
             return self._environment.from_string(s).render(context)
         except TypeError:

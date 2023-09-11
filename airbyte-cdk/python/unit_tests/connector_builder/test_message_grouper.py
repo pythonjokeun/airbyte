@@ -242,9 +242,9 @@ def test_get_grouped_messages_record_limit(mock_entrypoint_read: Mock, request_r
         mock_source, config=CONFIG, configured_catalog=create_configured_catalog("hashiras"), record_limit=request_record_limit
     )
     single_slice = actual_response.slices[0]
-    total_records = 0
-    for i, actual_page in enumerate(single_slice.pages):
-        total_records += len(actual_page.records)
+    total_records = sum(
+        len(actual_page.records) for actual_page in single_slice.pages
+    )
     assert total_records == min([record_limit, n_records])
 
     assert (total_records >= max_record_limit) == actual_response.test_read_limit_reached
@@ -283,9 +283,9 @@ def test_get_grouped_messages_default_record_limit(mock_entrypoint_read: Mock, m
         source=mock_source, config=CONFIG, configured_catalog=create_configured_catalog("hashiras")
     )
     single_slice = actual_response.slices[0]
-    total_records = 0
-    for i, actual_page in enumerate(single_slice.pages):
-        total_records += len(actual_page.records)
+    total_records = sum(
+        len(actual_page.records) for actual_page in single_slice.pages
+    )
     assert total_records == min([max_record_limit, n_records])
 
 
@@ -614,7 +614,12 @@ def record_message(stream: str, data: Mapping[str, Any]) -> AirbyteMessage:
 
 
 def slice_message(slice_descriptor: str = '{"key": "value"}') -> AirbyteMessage:
-    return AirbyteMessage(type=MessageType.LOG, log=AirbyteLogMessage(level=Level.INFO, message="slice:" + slice_descriptor))
+    return AirbyteMessage(
+        type=MessageType.LOG,
+        log=AirbyteLogMessage(
+            level=Level.INFO, message=f"slice:{slice_descriptor}"
+        ),
+    )
 
 
 def connector_configuration_control_message(emitted_at: float, config: Mapping[str, Any]) -> AirbyteMessage:

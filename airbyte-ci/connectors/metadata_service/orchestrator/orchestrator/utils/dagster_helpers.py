@@ -37,6 +37,5 @@ def string_array_to_hash(strings: List[str]) -> str:
     Returns:
         str: A cursor string
     """
-    unique_strings = list(set(strings))
-    unique_strings.sort()
+    unique_strings = sorted(set(strings))
     return hashlib.md5(str(unique_strings).encode("utf-8")).hexdigest()

@@ -151,7 +151,7 @@ def test_check_connector_https_url_only_all_connectors():
             by_ab_internal_sl.setdefault(failing_connector.ab_internal_sl, [])
             by_ab_internal_sl[failing_connector.ab_internal_sl].append(failing_connector)
         failure_message = ""
-        for ab_internal_sl in by_ab_internal_sl.keys():
+        for ab_internal_sl in by_ab_internal_sl:
             failure_message += f"\nFailing SL {ab_internal_sl} connectors:\n"
             for connector in by_ab_internal_sl[ab_internal_sl]:
                 failure_message += f"\t- {connector.technical_name}\n"

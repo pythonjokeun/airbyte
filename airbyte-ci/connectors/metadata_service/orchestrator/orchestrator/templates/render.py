@@ -16,10 +16,7 @@ from orchestrator.utils.object_helpers import deep_copy_params
 
 
 def simple_link_html(url: str) -> str:
-    if not url:
-        return None
-
-    return f'<a href="{url}" target="_blank">🔗 Link</a>'
+    return None if not url else f'<a href="{url}" target="_blank">🔗 Link</a>'
 
 
 def icon_image_html(icon_url: str) -> str:
@@ -127,9 +124,9 @@ def enhance_nightly_report(nightly_report_df: pd.DataFrame) -> str:
     nightly_report_df = nightly_report_df.reindex(sorted(nightly_report_df.columns), axis=1)
 
     calculated_report_columns_df = nightly_report_df.apply(lambda row: calculated_report_columns(row), axis="columns", result_type="expand")
-    enhance_nightly_report_df = pd.concat([nightly_report_df, calculated_report_columns_df], axis="columns")
-
-    return enhance_nightly_report_df
+    return pd.concat(
+        [nightly_report_df, calculated_report_columns_df], axis="columns"
+    )
 
 
 def nightly_report_df_to_md(nightly_report_df: pd.DataFrame) -> str:
@@ -144,11 +141,7 @@ def get_stats_for_connector_type(enhanced_nightly_report_df: pd.DataFrame, conne
     success = len(specific_connector_type_df[specific_connector_type_df["last_build_status"] == True])
     failure = len(specific_connector_type_df[specific_connector_type_df["last_build_status"] == False])
 
-    # Safely calculate percentage and Handle the case where there are no tests, or divide by zero
-    success_percent = 0
-    if tested > 0:
-        success_percent = round(success / tested * 100, 2)
-
+    success_percent = round(success / tested * 100, 2) if tested > 0 else 0
     return {
         "total": total,
         "tested": tested,
@@ -160,9 +153,7 @@ def get_stats_for_connector_type(enhanced_nightly_report_df: pd.DataFrame, conne
 
 def get_latest_nightly_report_df(nightly_report_complete_df: pd.DataFrame) -> pd.DataFrame:
     nightly_report_complete_df = nightly_report_complete_df.sort_values(by=["parent_prefix"])
-    latest_run = nightly_report_complete_df.iloc[-1]
-
-    return latest_run
+    return nightly_report_complete_df.iloc[-1]
 
 
 # Templates
@@ -254,9 +245,9 @@ def render_connector_test_badge(test_summary: pd.DataFrame) -> str:
     if number_of_passes > 0:
         message += f"✔ {number_of_passes}"
 
-    if number_of_passes > 0 and number_of_fails > 0:
-        color = "yellow"
-        message += " | "
+        if number_of_fails > 0:
+            color = "yellow"
+            message += " | "
 
     if number_of_fails > 0:
         message += f"✘ {number_of_fails}"
@@ -274,6 +265,4 @@ def render_connector_test_badge(test_summary: pd.DataFrame) -> str:
         "logoSvg": logo_svg_string,
     }
 
-    json_string = json.dumps(badge_dict)
-
-    return json_string
+    return json.dumps(badge_dict)

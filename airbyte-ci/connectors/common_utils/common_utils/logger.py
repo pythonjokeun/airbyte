@@ -19,11 +19,9 @@ class MyFormatter(logging.Formatter):
         """! @brief redefinition of format of log"""
         ct = self.converter(record.created)
         if datefmt:
-            s = ct.strftime(datefmt)
-        else:
-            t = ct.strftime("%Y-%m-%d %H:%M:%S")
-            s = "%s,%03d" % (t, record.msecs)
-        return s
+            return ct.strftime(datefmt)
+        t = ct.strftime("%Y-%m-%d %H:%M:%S")
+        return "%s,%03d" % (t, record.msecs)
 
 
 class Logger:

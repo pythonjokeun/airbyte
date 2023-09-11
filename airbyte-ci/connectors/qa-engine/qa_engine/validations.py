@@ -35,7 +35,7 @@ def is_appropriate_for_cloud_use(definition_id: str) -> bool:
 def is_eligible_for_promotion_to_cloud(connector_qa_data: pd.Series) -> bool:
     if connector_qa_data["is_on_cloud"]:
         return False
-    return all([connector_qa_data[col] for col in TRUTHY_COLUMNS_TO_BE_ELIGIBLE])
+    return all(connector_qa_data[col] for col in TRUTHY_COLUMNS_TO_BE_ELIGIBLE)
 
 
 def latest_build_is_successful(connector_qa_data: pd.Series) -> bool:

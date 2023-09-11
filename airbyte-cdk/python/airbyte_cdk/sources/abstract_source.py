@@ -133,8 +133,9 @@ class AbstractSource(Source, ABC):
                     logger.exception(f"Encountered an exception while reading stream {configured_stream.stream.name}")
                     logger.info(f"Marking stream {configured_stream.stream.name} as STOPPED")
                     yield stream_status_as_airbyte_message(configured_stream, AirbyteStreamStatus.INCOMPLETE)
-                    display_message = stream_instance.get_error_display_message(e)
-                    if display_message:
+                    if display_message := stream_instance.get_error_display_message(
+                        e
+                    ):
                         raise AirbyteTracedException.from_exception(e, message=display_message) from e
                     raise e
                 finally:
@@ -272,9 +273,7 @@ class AbstractSource(Source, ABC):
                 return
 
         if not has_slices:
-            # Safety net to ensure we always emit at least one state message even if there are no slices
-            checkpoint = self._checkpoint_state(stream_instance, stream_state, state_manager)
-            yield checkpoint
+            yield self._checkpoint_state(stream_instance, stream_state, state_manager)
 
     def _emit_queued_messages(self) -> Iterable[AirbyteMessage]:
         if self.message_repository:

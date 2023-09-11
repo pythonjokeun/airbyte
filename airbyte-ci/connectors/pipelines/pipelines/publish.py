@@ -94,10 +94,10 @@ class PullConnectorImageFromRegistry(Step):
             except ExecError as e:
                 raise Exception(f"Failed to inspect {self.context.docker_image}: {e.stderr}") from e
             try:
-                for layer in json.loads(inspect_stdout)["layers"]:
-                    if not layer["mediaType"].endswith("gzip"):
-                        return False
-                return True
+                return all(
+                    layer["mediaType"].endswith("gzip")
+                    for layer in json.loads(inspect_stdout)["layers"]
+                )
             except (KeyError, json.JSONDecodeError) as e:
                 raise Exception(f"Failed to parse manifest for {self.context.docker_image}: {inspect_stdout}") from e
 
@@ -106,11 +106,10 @@ class PullConnectorImageFromRegistry(Step):
             try:
                 await self.context.dagger_client.container().from_(f"docker.io/{self.context.docker_image}").with_exec(["spec"])
             except ExecError:
-                if attempt > 0:
-                    await anyio.sleep(10)
-                    return await self._run(attempt - 1)
-                else:
+                if attempt <= 0:
                     return StepResult(self, status=StepStatus.FAILURE, stderr=f"Failed to pull {self.context.docker_image}")
+                await anyio.sleep(10)
+                return await self._run(attempt - 1)
             if not await self.check_if_image_only_has_gzip_layers():
                 return StepResult(
                     self,

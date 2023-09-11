@@ -29,8 +29,11 @@ def find_connectors_with_bad_strictness_level() -> List[utils.Connector]:
     connectors_with_bad_strictness_level = []
     changed_connector = utils.get_changed_connectors(destination=False, third_party=False)
     for connector in changed_connector:
-        check_for_high_strictness = connector.acceptance_test_config is not None and connector.requires_high_test_strictness_level
-        if check_for_high_strictness:
+        if (
+            check_for_high_strictness := connector.acceptance_test_config
+            is not None
+            and connector.requires_high_test_strictness_level
+        ):
             try:
                 assert connector.acceptance_test_config.get("test_strictness_level") == "high"
             except AssertionError:
@@ -70,14 +73,13 @@ def find_mandatory_reviewers() -> List[Union[str, Dict[str, List]]]:
         return [{"any-of": list(TEST_STRICTNESS_LEVEL_REVIEWERS)}]
     if ga_bypass_reason_changes:
         return [{"any-of": list(GA_BYPASS_REASON_REVIEWERS)}]
-    if important_connector_changes:
-        return list(GA_CONNECTOR_REVIEWERS)
-    return []
+    return list(GA_CONNECTOR_REVIEWERS) if important_connector_changes else []
 
 
 def check_test_strictness_level():
-    connectors_with_bad_strictness_level = find_connectors_with_bad_strictness_level()
-    if connectors_with_bad_strictness_level:
+    if (
+        connectors_with_bad_strictness_level := find_connectors_with_bad_strictness_level()
+    ):
         logging.error(
             f"The following connectors must enable high test strictness level: {connectors_with_bad_strictness_level}. Please check this documentation for details: https://docs.airbyte.com/connector-development/testing-connectors/connector-acceptance-tests-reference/#strictness-level"
         )
@@ -87,9 +89,7 @@ def check_test_strictness_level():
 
 
 def write_review_requirements_file():
-    mandatory_reviewers = find_mandatory_reviewers()
-
-    if mandatory_reviewers:
+    if mandatory_reviewers := find_mandatory_reviewers():
         requirements_file_content = [
             {"name": "Required reviewers from the connector org teams", "paths": "unmatched", "teams": mandatory_reviewers}
         ]

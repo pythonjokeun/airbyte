@@ -191,9 +191,14 @@ class MockContainer:
 
 
 def binary_generator(lengths, last_line=None):
-    data = ""
-    for length in lengths:
-        data += "".join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length)) + "\n"
+    data = "".join(
+        "".join(
+            random.choice(string.ascii_uppercase + string.digits)
+            for _ in range(length)
+        )
+        + "\n"
+        for length in lengths
+    )
     data = data.encode()
     chunk_size = random.randint(2, 32)
 

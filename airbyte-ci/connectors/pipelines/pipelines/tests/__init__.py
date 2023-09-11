@@ -75,9 +75,8 @@ async def run_code_format_checks(context: ConnectorContext) -> List[StepResult]:
     """
     if _run_code_format_checks := LANGUAGE_MAPPING["run_code_format_checks"].get(context.connector.language):
         return await _run_code_format_checks(context)
-    else:
-        context.logger.warning(f"No code format checks defined for connector language {context.connector.language}!")
-        return []
+    context.logger.warning(f"No code format checks defined for connector language {context.connector.language}!")
+    return []
 
 
 async def run_all_tests(context: ConnectorContext) -> List[StepResult]:
@@ -91,9 +90,8 @@ async def run_all_tests(context: ConnectorContext) -> List[StepResult]:
     """
     if _run_all_tests := LANGUAGE_MAPPING["run_all_tests"].get(context.connector.language):
         return await _run_all_tests(context)
-    else:
-        context.logger.warning(f"No tests defined for connector language {context.connector.language}!")
-        return []
+    context.logger.warning(f"No tests defined for connector language {context.connector.language}!")
+    return []
 
 
 async def run_connector_test_pipeline(context: ConnectorContext, semaphore: anyio.Semaphore) -> ConnectorReport:

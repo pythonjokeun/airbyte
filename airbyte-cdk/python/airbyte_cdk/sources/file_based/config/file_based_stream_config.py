@@ -74,9 +74,13 @@ class FileBasedStreamConfig(BaseModel):
     def _transform_legacy_config(cls, legacy_config: Mapping[str, Any], file_type: str) -> Mapping[str, Any]:
         if file_type.casefold() not in VALID_FILE_TYPES:
             raise ValueError(f"Format filetype {file_type} is not a supported file type")
-        if file_type.casefold() == "parquet" or file_type.casefold() == "avro":
+        if file_type.casefold() in {"parquet", "avro"}:
             legacy_config = cls._transform_legacy_parquet_or_avro_config(legacy_config)
-        return {file_type: VALID_FILE_TYPES[file_type.casefold()].parse_obj({key: val for key, val in legacy_config.items()})}
+        return {
+            file_type: VALID_FILE_TYPES[file_type.casefold()].parse_obj(
+                dict(legacy_config.items())
+            )
+        }
 
     @classmethod
     def _transform_legacy_parquet_or_avro_config(cls, config: Mapping[str, Any]) -> Mapping[str, Any]:
@@ -85,7 +89,7 @@ class FileBasedStreamConfig(BaseModel):
         To avoid introducing a breaking change with the new default, we will set decimal_as_float to True in the legacy configs.
         """
         filetype = config.get("filetype")
-        if filetype != "parquet" and filetype != "avro":
+        if filetype not in ["parquet", "avro"]:
             raise ValueError(
                 f"Expected {filetype} format, got {config}. This is probably due to a CDK bug. Please reach out to the Airbyte team for support."
             )
@@ -110,8 +114,8 @@ class FileBasedStreamConfig(BaseModel):
         and converts it into a Mapping[str, Any] which is used by file-based CDK components.
         """
         if self.input_schema:
-            schema = type_mapping_to_jsonschema(self.input_schema)
-            if not schema:
+            if schema := type_mapping_to_jsonschema(self.input_schema):
+                return schema
+            else:
                 raise ValueError(f"Unable to create JSON schema from input schema {self.input_schema}")
-            return schema
         return None

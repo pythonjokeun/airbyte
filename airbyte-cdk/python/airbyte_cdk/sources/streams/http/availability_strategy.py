@@ -86,8 +86,9 @@ class HttpAvailabilityStrategy(AvailabilityStrategy):
 
         doc_ref = self._visit_docs_message(logger, source)
         reason = f"The endpoint {error.response.url} returned {status_code}: {error.response.reason}. {known_reason}. {doc_ref} "
-        response_error_message = stream.parse_response_error_message(error.response)
-        if response_error_message:
+        if response_error_message := stream.parse_response_error_message(
+            error.response
+        ):
             reason += response_error_message
         return False, reason
 

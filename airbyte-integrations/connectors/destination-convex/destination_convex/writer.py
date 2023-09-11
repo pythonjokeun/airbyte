@@ -22,7 +22,7 @@ class ConvexWriter:
 
     def delete_tables(self, table_names: List[str]) -> None:
         """Deletes all the records belonging to the input stream"""
-        if len(table_names) > 0:
+        if table_names:
             self.client.delete(table_names)
 
     def add_indexes(self, indexes: Mapping[str, List[List[str]]]) -> None:

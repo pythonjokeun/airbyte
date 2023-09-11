@@ -40,7 +40,7 @@ def add_new_metadata_partitions_op(context):
     context.log.info(f"New etags found: {new_etags_found}")
 
     if not new_etags_found:
-        return SkipReason(f"No new metadata files to process in GCS bucket")
+        return SkipReason("No new metadata files to process in GCS bucket")
 
     # if there are more than the MAX_METADATA_PARTITION_RUN_REQUEST, we need to split them into multiple runs
     etags_to_process = new_etags_found

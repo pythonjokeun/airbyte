@@ -50,11 +50,14 @@ async def _patch_gradle_file(context: ConnectorContext, connector_dir: Directory
 
     context.logger.warn("Patching build.gradle file to remove normalization build.")
 
-    patched_gradle_file = []
-
-    for line in gradle_file_content.splitlines():
-        if not any(line_to_remove in line for line_to_remove in LINES_TO_REMOVE_FROM_GRADLE_FILE):
-            patched_gradle_file.append(line)
+    patched_gradle_file = [
+        line
+        for line in gradle_file_content.splitlines()
+        if all(
+            line_to_remove not in line
+            for line_to_remove in LINES_TO_REMOVE_FROM_GRADLE_FILE
+        )
+    ]
     return connector_dir.with_new_file("build.gradle", contents="\n".join(patched_gradle_file))
 
 

@@ -123,5 +123,8 @@ class TestSpec(AbstractFileBasedSpec):
 def test_globs_and_prefixes_from_globs(globs: List[str], config: Mapping[str, Any], expected_matches: Set[str], expected_path_prefixes: Set[str]) -> None:
     reader = TestStreamReader()
     reader.config = TestSpec(**config)
-    assert set([f.uri for f in reader.filter_files_by_globs_and_start_date(FILES, globs)]) == expected_matches
+    assert {
+        f.uri
+        for f in reader.filter_files_by_globs_and_start_date(FILES, globs)
+    } == expected_matches
     assert set(reader.get_prefixes_from_globs(globs)) == expected_path_prefixes

@@ -62,10 +62,7 @@ class UnitTests(GradleTask):
     @property
     def gradle_task_options(self) -> tuple[str, ...]:
         """Return the Gradle task options to use when running unit tests."""
-        if self.context.fail_fast:
-            return ("--fail-fast",)
-
-        return ()
+        return ("--fail-fast", ) if self.context.fail_fast else ()
 
 
 async def run_all_tests(context: ConnectorContext) -> List[StepResult]:
@@ -83,11 +80,8 @@ async def run_all_tests(context: ConnectorContext) -> List[StepResult]:
         List[StepResult]: The results of all the tests steps.
     """
     context.connector_secrets = await secrets.get_connector_secrets(context)
-    step_results = []
-
     unit_tests_results = await UnitTests(context).run()
-    step_results.append(unit_tests_results)
-
+    step_results = [unit_tests_results]
     if context.fail_fast and unit_tests_results.status is StepStatus.FAILURE:
         return step_results
 

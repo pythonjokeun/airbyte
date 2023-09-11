@@ -312,13 +312,14 @@ class SimpleRetriever(Retriever):
     def _get_most_recent_record(
         self, current_most_recent: Optional[Record], stream_data: StreamData, stream_slice: StreamSlice
     ) -> Optional[Record]:
-        if self.cursor and (record := self._extract_record(stream_data, stream_slice)):
-            if not current_most_recent:
-                return record
-            else:
-                return current_most_recent if self.cursor.is_greater_than_or_equal(current_most_recent, record) else record
-        else:
+        if not self.cursor or not (
+            record := self._extract_record(stream_data, stream_slice)
+        ):
             return None
+        if current_most_recent:
+            return current_most_recent if self.cursor.is_greater_than_or_equal(current_most_recent, record) else record
+        else:
+            return record
 
     @staticmethod
     def _extract_record(stream_data: StreamData, stream_slice: StreamSlice) -> Optional[Record]:

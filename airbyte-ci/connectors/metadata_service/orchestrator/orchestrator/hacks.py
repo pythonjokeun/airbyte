@@ -31,8 +31,7 @@ def _get_version_specific_registry_entry_file_path(registry_entry, registry_name
     docker_version = registry_entry.dockerImageTag
 
     assumed_metadata_file_path = get_metadata_remote_file_path(docker_reposiory, docker_version)
-    registry_entry_file_path = assumed_metadata_file_path.replace(METADATA_FILE_NAME, registry_name)
-    return registry_entry_file_path
+    return assumed_metadata_file_path.replace(METADATA_FILE_NAME, registry_name)
 
 
 def _check_for_invalid_write_path(write_path: str):

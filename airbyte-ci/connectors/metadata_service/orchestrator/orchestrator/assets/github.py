@@ -30,8 +30,7 @@ def _get_md5_of_github_file(context: OpExecutionContext, github_connector_repo: 
     context.log.debug(f"calculating md5 hash of {path}")
     md5_hash = hashlib.md5()
     md5_hash.update(file_contents.decoded_content)
-    base_64_value = base64.b64encode(md5_hash.digest()).decode("utf8")
-    return base_64_value
+    return base64.b64encode(md5_hash.digest()).decode("utf8")
 
 
 @asset(required_resource_keys={"github_connectors_directory"}, group_name=GROUP_NAME)

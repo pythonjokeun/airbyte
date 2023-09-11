@@ -20,10 +20,7 @@ def initialize():
 
 def before_send(event, hint):
     # Ignore logged errors that do not contain an exception
-    if "log_record" in hint and "exc_info" not in hint:
-        return None
-
-    return event
+    return None if "log_record" in hint and "exc_info" not in hint else event
 
 
 def with_step_context(func):

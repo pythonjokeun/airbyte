@@ -38,11 +38,7 @@ class HttpStream(Stream, ABC):
 
     # TODO: remove legacy HttpAuthenticator authenticator references
     def __init__(self, authenticator: Optional[Union[AuthBase, HttpAuthenticator]] = None):
-        if self.use_cache:
-            self._session = self.request_cache()
-        else:
-            self._session = requests.Session()
-
+        self._session = self.request_cache() if self.use_cache else requests.Session()
         self._authenticator: HttpAuthenticator = NoAuth()
         if isinstance(authenticator, AuthBase):
             self._session.auth = authenticator
@@ -277,7 +273,9 @@ class HttpStream(Stream, ABC):
         query_string = urllib.parse.urlparse(url).query
         query_dict = {k: v[0] for k, v in urllib.parse.parse_qs(query_string).items()}
 
-        duplicate_keys_with_same_value = {k for k in query_dict.keys() if str(params.get(k)) == str(query_dict[k])}
+        duplicate_keys_with_same_value = {
+            k for k in query_dict if str(params.get(k)) == str(query_dict[k])
+        }
         return {k: v for k, v in params.items() if k not in duplicate_keys_with_same_value}
 
     def _create_prepared_request(

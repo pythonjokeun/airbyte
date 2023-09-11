@@ -16,11 +16,11 @@ def github_connector_nightly_workflow_run_sensor(job, resources_def) -> SensorDe
     """
 
     @sensor(
-        name=f"{job.name}_on_github_connector_nightly_workflow_success",
-        job=job,
-        minimum_interval_seconds=(1 * 60 * 60),
-        default_status=DefaultSensorStatus.STOPPED,
-    )
+            name=f"{job.name}_on_github_connector_nightly_workflow_success",
+            job=job,
+            minimum_interval_seconds=(1 * 60 * 60),
+            default_status=DefaultSensorStatus.STOPPED,
+        )
     def github_connector_nightly_workflow_run_sensor_definition(context: SensorEvaluationContext):
         context.log.info("Starting github_connector_nightly_workflow_run_sensor")
 
@@ -36,7 +36,8 @@ def github_connector_nightly_workflow_run_sensor(job, resources_def) -> SensorDe
 
             # get all latest updated at value from the latest_successful_workflow_runs
             last_successful_run_date = max(
-                [datetime.strptime(run["updated_at"], EXPECTED_DATETIME_FORMAT) for run in latest_successful_workflow_runs]
+                datetime.strptime(run["updated_at"], EXPECTED_DATETIME_FORMAT)
+                for run in latest_successful_workflow_runs
             )
 
             is_new_run = not cursor_as_datetime or cursor_as_datetime < last_successful_run_date

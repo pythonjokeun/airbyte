@@ -47,13 +47,10 @@ def resolve_ref_links(obj: Any) -> Any:
     """
     if isinstance(obj, jsonref.JsonRef):
         obj = resolve_ref_links(obj.__subject__)
-        # Omit existing definitions for external resource since
-        # we dont need it anymore.
-        if isinstance(obj, dict):
-            obj.pop("definitions", None)
-            return obj
-        else:
+        if not isinstance(obj, dict):
             raise ValueError(f"Expected obj to be a dict. Got {obj}")
+        obj.pop("definitions", None)
+        return obj
     elif isinstance(obj, dict):
         return {k: resolve_ref_links(v) for k, v in obj.items()}
     elif isinstance(obj, list):
@@ -149,7 +146,7 @@ class ResourceSchemaLoader:
 
         package = importlib.import_module(self.package_name)
         if package.__file__:
-            base = os.path.dirname(package.__file__) + "/"
+            base = f"{os.path.dirname(package.__file__)}/"
         else:
             raise ValueError(f"Package {package} does not have a valid __file__ field")
         resolved = jsonref.JsonRef.replace_refs(raw_schema, loader=JsonFileLoader(base, "schemas/shared"), base_uri=base)
@@ -173,10 +170,10 @@ def check_config_against_spec_or_exit(config: Mapping[str, Any], spec: Connector
         validate(instance=config, schema=spec_schema)
     except ValidationError as validation_error:
         raise AirbyteTracedException(
-            message="Config validation error: " + validation_error.message,
+            message=f"Config validation error: {validation_error.message}",
             internal_message=validation_error.message,
             failure_type=FailureType.config_error,
-        ) from None  # required to prevent logging config secrets from the ValidationError's stacktrace
+        ) from None
 
 
 class InternalConfig(BaseModel):

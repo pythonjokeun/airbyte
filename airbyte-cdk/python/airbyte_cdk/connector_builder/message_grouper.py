@@ -303,7 +303,7 @@ class MessageGrouper:
     @staticmethod
     def _clean_config(config: Dict[str, Any]) -> Dict[str, Any]:
         cleaned_config = deepcopy(config)
-        for key in config.keys():
+        for key in config:
             if key.startswith("__"):
                 del cleaned_config[key]
         return cleaned_config

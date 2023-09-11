@@ -40,15 +40,25 @@ def future_state_fixture(future_state_configuration, test_strictness_level, conf
         contents = file.read()
     states = json.loads(contents)
     if test_strictness_level is Config.TestStrictnessLevel.high:
-        if not all([missing_stream.bypass_reason is not None for missing_stream in missing_streams]):
+        if any(
+            missing_stream.bypass_reason is None
+            for missing_stream in missing_streams
+        ):
             pytest.fail("High test strictness level error: all missing_streams must have a bypass reason specified.")
         all_stream_names = {
             stream.stream.name for stream in configured_catalog.streams if SyncMode.incremental in stream.stream.supported_sync_modes
         }
-        streams_in_states = set([state["stream"]["stream_descriptor"]["name"] for state in states])
-        declared_missing_streams_names = set([missing_stream.name for missing_stream in missing_streams])
-        undeclared_missing_streams_names = all_stream_names - declared_missing_streams_names - streams_in_states
-        if undeclared_missing_streams_names:
+        streams_in_states = {
+            state["stream"]["stream_descriptor"]["name"] for state in states
+        }
+        declared_missing_streams_names = {
+            missing_stream.name for missing_stream in missing_streams
+        }
+        if (
+            undeclared_missing_streams_names := all_stream_names
+            - declared_missing_streams_names
+            - streams_in_states
+        ):
             pytest.fail(
                 f"High test strictness level error: {', '.join(undeclared_missing_streams_names)} streams are missing in your future_state file, please declare a state for those streams or fill-in a valid bypass_reason."
             )
@@ -82,7 +92,7 @@ def construct_latest_state_from_messages(messages: List[AirbyteMessage]) -> Dict
     Because connectors that have migrated to per-stream state only emit state messages with the new state value for a single
     stream, this helper method reconstructs the final state of all streams after going through each AirbyteMessage
     """
-    latest_per_stream_by_name = dict()
+    latest_per_stream_by_name = {}
     for message in messages:
         current_state = message.state
         if current_state and current_state.type == AirbyteStateType.STREAM:
@@ -98,9 +108,7 @@ def naive_diff_records(records_1: List[AirbyteMessage], records_2: List[AirbyteM
     records_1_data = [record.record.data for record in records_1]
     records_2_data = [record.record.data for record in records_2]
 
-    # ignore_order=True because the order of records in the list is not guaranteed
-    diff = DeepDiff(records_1_data, records_2_data, ignore_order=True)
-    return diff
+    return DeepDiff(records_1_data, records_2_data, ignore_order=True)
 
 
 @pytest.mark.default_timeout(20 * 60)
@@ -130,15 +138,18 @@ class TestIncremental(BaseTest):
         assert states_1, "First Read should produce at least one state"
         assert records_1, "First Read should produce at least one record"
 
-        # For legacy state format, the final state message contains the final state of all streams. For per-stream state format,
-        # the complete final state of streams must be assembled by going through all prior state messages received
-        is_per_stream = is_per_stream_state(states_1[-1])
-        if is_per_stream:
+        if is_per_stream := is_per_stream_state(states_1[-1]):
             latest_state = construct_latest_state_from_messages(states_1)
-            state_input = list(
-                {"type": "STREAM", "stream": {"stream_descriptor": {"name": stream_name}, "stream_state": stream_state}}
+            state_input = [
+                {
+                    "type": "STREAM",
+                    "stream": {
+                        "stream_descriptor": {"name": stream_name},
+                        "stream_state": stream_state,
+                    },
+                }
                 for stream_name, stream_state in latest_state.items()
-            )
+            ]
         else:
             state_input = states_1[-1].state.data
 
@@ -193,7 +204,7 @@ class TestIncremental(BaseTest):
         min_batches_to_test = 5
         sample_rate = len(unique_state_messages) // min_batches_to_test
 
-        mutating_stream_name_to_per_stream_state = dict()
+        mutating_stream_name_to_per_stream_state = {}
         for idx, state_message in enumerate(unique_state_messages):
             assert state_message.type == Type.STATE
 
@@ -249,20 +260,19 @@ class TestIncremental(BaseTest):
         stream_name_to_per_stream_state: MutableMapping,
         is_per_stream,
     ) -> Tuple[Union[List[MutableMapping], MutableMapping], MutableMapping]:
-        if is_per_stream:
-            # Including all the latest state values from previous batches, update the combined stream state
-            # with the current batch's stream state and then use it in the following read() request
-            current_state = state_message.state
-            if current_state and current_state.type == AirbyteStateType.STREAM:
-                per_stream = current_state.stream
-                if per_stream.stream_state:
-                    stream_name_to_per_stream_state[per_stream.stream_descriptor.name] = (
-                        per_stream.stream_state.dict() if per_stream.stream_state else {}
-                    )
-            state_input = [
-                {"type": "STREAM", "stream": {"stream_descriptor": {"name": stream_name}, "stream_state": stream_state}}
-                for stream_name, stream_state in stream_name_to_per_stream_state.items()
-            ]
-            return state_input, stream_name_to_per_stream_state
-        else:
+        if not is_per_stream:
             return state_message.state.data, state_message.state.data
+        # Including all the latest state values from previous batches, update the combined stream state
+        # with the current batch's stream state and then use it in the following read() request
+        current_state = state_message.state
+        if current_state and current_state.type == AirbyteStateType.STREAM:
+            per_stream = current_state.stream
+            if per_stream.stream_state:
+                stream_name_to_per_stream_state[per_stream.stream_descriptor.name] = (
+                    per_stream.stream_state.dict() if per_stream.stream_state else {}
+                )
+        state_input = [
+            {"type": "STREAM", "stream": {"stream_descriptor": {"name": stream_name}, "stream_state": stream_state}}
+            for stream_name, stream_state in stream_name_to_per_stream_state.items()
+        ]
+        return state_input, stream_name_to_per_stream_state

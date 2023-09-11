@@ -106,10 +106,18 @@ REGISTRY_ENTRY_RESOURCE_TREE = {
     **SLACK_RESOURCE_TREE,
     **GCS_RESOURCE_TREE,
     "latest_cloud_registry_entries_file_blobs": gcs_directory_blobs.configured(
-        {"gcs_bucket": {"env": "METADATA_BUCKET"}, "prefix": METADATA_FOLDER, "match_regex": f".*latest/cloud.json$"}
+        {
+            "gcs_bucket": {"env": "METADATA_BUCKET"},
+            "prefix": METADATA_FOLDER,
+            "match_regex": ".*latest/cloud.json$",
+        }
     ),
     "latest_oss_registry_entries_file_blobs": gcs_directory_blobs.configured(
-        {"gcs_bucket": {"env": "METADATA_BUCKET"}, "prefix": METADATA_FOLDER, "match_regex": f".*latest/oss.json$"}
+        {
+            "gcs_bucket": {"env": "METADATA_BUCKET"},
+            "prefix": METADATA_FOLDER,
+            "match_regex": ".*latest/oss.json$",
+        }
     ),
 }
 
@@ -132,12 +140,12 @@ CONNECTOR_TEST_REPORT_RESOURCE_TREE = {
     ),
 }
 
-RESOURCES = {
-    **METADATA_RESOURCE_TREE,
-    **REGISTRY_RESOURCE_TREE,
-    **REGISTRY_ENTRY_RESOURCE_TREE,
-    **CONNECTOR_TEST_REPORT_RESOURCE_TREE,
-}
+RESOURCES = (
+    METADATA_RESOURCE_TREE
+    | REGISTRY_RESOURCE_TREE
+    | REGISTRY_ENTRY_RESOURCE_TREE
+    | CONNECTOR_TEST_REPORT_RESOURCE_TREE
+)
 
 SENSORS = [
     registry_updated_sensor(job=generate_registry_reports, resources_def=RESOURCES),

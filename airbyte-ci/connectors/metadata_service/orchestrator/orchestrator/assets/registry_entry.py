@@ -115,7 +115,7 @@ def apply_overrides_from_registry(metadata_data: dict, override_registry_key: st
     # remove any None values from the override registry
     override_registry = {k: v for k, v in override_registry.items() if v is not None}
 
-    metadata_data.update(override_registry)
+    metadata_data |= override_registry
 
     return metadata_data
 
@@ -167,9 +167,7 @@ def metadata_to_registry_entry(metadata_entry: LatestMetadataEntry, override_reg
     del overridden_metadata_data["registries"]
     del overridden_metadata_data["connectorType"]
 
-    # rename field connectorSubtype to sourceType
-    connector_subtype = overridden_metadata_data.get("connectorSubtype")
-    if connector_subtype:
+    if connector_subtype := overridden_metadata_data.get("connectorSubtype"):
         overridden_metadata_data["sourceType"] = overridden_metadata_data["connectorSubtype"]
         del overridden_metadata_data["connectorSubtype"]
 
@@ -330,12 +328,10 @@ def safe_parse_metadata_definition(metadata_blob: storage.Blob) -> Optional[Meta
         return MetadataDefinition.parse_obj(metadata_dict)
 
     except ValidationError as e:
-        # only raise the error if "latest" is in the path
         if "latest" in metadata_blob.name:
             raise e
-        else:
-            print(f"WARNING: Could not parse metadata definition for {metadata_blob.name}. Error: {e}")
-            return None
+        print(f"WARNING: Could not parse metadata definition for {metadata_blob.name}. Error: {e}")
+        return None
 
 
 # ASSETS
@@ -464,10 +460,7 @@ def registry_entry(context: OpExecutionContext, metadata_entry: Optional[LatestM
         f"delete_{registry_name}": MetadataValue.url(registry_url) for registry_name, registry_url in deleted_registry_entries.items()
     }
 
-    dagster_metadata = {
-        **dagster_metadata_persist,
-        **dagster_metadata_delete,
-    }
+    dagster_metadata = dagster_metadata_persist | dagster_metadata_delete
 
     # Log the registry entries that were created
     for registry_name, registry_url in persisted_registry_entries.items():
@@ -479,7 +472,7 @@ def registry_entry(context: OpExecutionContext, metadata_entry: Optional[LatestM
         )
 
     # Log the registry entries that were deleted
-    for registry_name, registry_url in deleted_registry_entries.items():
+    for registry_name in deleted_registry_entries:
         PublishConnectorLifecycle.log(
             context,
             PublishConnectorLifecycleStage.REGISTRY_ENTRY_GENERATION,

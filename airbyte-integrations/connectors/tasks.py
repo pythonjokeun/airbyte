@@ -125,9 +125,10 @@ def _run_task(
     virtualenv.cli_run([venv_name])
     activator = os.path.join(os.path.abspath(venv_name), "bin", "activate")
 
-    commands = []
-
-    commands.extend([cmd.format(source_path=source_path, venv=venv_name, **kwargs) for cmd in task_commands[task_name]])
+    commands = [
+        cmd.format(source_path=source_path, venv=venv_name, **kwargs)
+        for cmd in task_commands[task_name]
+    ]
 
     exit_code: int = 0
 

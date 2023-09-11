@@ -56,14 +56,15 @@ class AvroParser(FileTypeParser):
         with stream_reader.open_file(file, self.file_read_mode, self.ENCODING, logger) as fp:
             avro_reader = fastavro.reader(fp)
             avro_schema = avro_reader.writer_schema
-        if not avro_schema["type"] == "record":
+        if avro_schema["type"] != "record":
             unsupported_type = avro_schema["type"]
             raise ValueError(f"Only record based avro files are supported. Found {unsupported_type}")
-        json_schema = {
-            field["name"]: AvroParser._convert_avro_type_to_json(avro_format, field["name"], field["type"])
+        return {
+            field["name"]: AvroParser._convert_avro_type_to_json(
+                avro_format, field["name"], field["type"]
+            )
             for field in avro_schema["fields"]
         }
-        return json_schema
 
     @classmethod
     def _convert_avro_type_to_json(cls, avro_format: AvroFormat, field_name: str, avro_field: str) -> Mapping[str, Any]:
@@ -145,8 +146,12 @@ class AvroParser(FileTypeParser):
             schema_field_name_to_type = {field["name"]: field["type"] for field in schema["fields"]}
             for record in avro_reader:
                 yield {
-                    record_field: self._to_output_value(avro_format, schema_field_name_to_type[record_field], record[record_field])
-                    for record_field, record_value in schema_field_name_to_type.items()
+                    record_field: self._to_output_value(
+                        avro_format,
+                        schema_field_name_to_type[record_field],
+                        record[record_field],
+                    )
+                    for record_field in schema_field_name_to_type
                 }
 
     @property

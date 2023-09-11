@@ -36,20 +36,14 @@ def json_blob_to_model(blob: storage.Blob, Model: Type[T]) -> T:
     # parse json
     report_json = json.loads(report)
 
-    # parse into pydandic model
-    report_model = Model(file_path=file_path, **report_json)
-
-    return report_model
+    return Model(file_path=file_path, **report_json)
 
 
 def blobs_to_typed_df(blobs: List[storage.Blob], Model: Type[T]) -> pd.DataFrame:
     # read each blob into a model
     models = [json_blob_to_model(blob, Model).dict() for blob in blobs]
 
-    # convert to dataframe
-    models_df = pd.DataFrame(models)
-
-    return models_df
+    return pd.DataFrame(models)
 
 
 def get_latest_reports(blobs: List[storage.Blob], number_to_get: int) -> List[storage.Blob]:
@@ -64,11 +58,7 @@ def get_latest_reports(blobs: List[storage.Blob], number_to_get: int) -> List[st
         A list of blobs
     """
 
-    # We can sort by the name to get the latest 10 nightly runs
-    # As the nightly reports have the timestamp in the path by design
-    # e.g. airbyte-ci/connectors/test/nightly_builds/master/1686132340/05d686eb0eee2888f6af010b385a4ede330a886b/complete.json
-    latest_nightly_complete_file_blobs = sorted(blobs, key=lambda blob: blob.name, reverse=True)[:number_to_get]
-    return latest_nightly_complete_file_blobs
+    return sorted(blobs, key=lambda blob: blob.name, reverse=True)[:number_to_get]
 
 
 def get_relevant_test_outputs(
@@ -89,15 +79,14 @@ def get_relevant_test_outputs(
         blob.name.replace(f"/{NIGHTLY_COMPLETE_REPORT_FILE_NAME}", "") for blob in latest_nightly_complete_file_blobs
     ]
 
-    # filter latest_nightly_test_output_file_blobs to only those that have a parent file path in latest_nightly_complete_file_paths
-    # This is to filter out incomplete, or unrelated/old connector test output files
-    relevant_nightly_test_output_file_blobs = [
+    return [
         blob
         for blob in latest_nightly_test_output_file_blobs
-        if any([parent_prefix in blob.name for parent_prefix in latest_nightly_complete_file_paths])
+        if any(
+            parent_prefix in blob.name
+            for parent_prefix in latest_nightly_complete_file_paths
+        )
     ]
-
-    return relevant_nightly_test_output_file_blobs
 
 
 def compute_connector_nightly_report_history(
@@ -147,8 +136,7 @@ def generate_nightly_report(context: OpExecutionContext) -> Output[pd.DataFrame]
 
     nightly_report_complete_md = render_connector_nightly_report_md(nightly_report_connector_matrix_df, nightly_report_complete_df)
 
-    channel = os.getenv("NIGHTLY_REPORT_CHANNEL")
-    if channel:
+    if channel := os.getenv("NIGHTLY_REPORT_CHANNEL"):
         send_slack_message(context, channel, nightly_report_complete_md, enable_code_block_wrapping=True)
 
     return Output(

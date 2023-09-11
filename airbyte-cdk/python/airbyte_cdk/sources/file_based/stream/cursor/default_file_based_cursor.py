@@ -39,9 +39,7 @@ class DefaultFileBasedCursor(AbstractFileBasedCursor):
     def add_file(self, file: RemoteFile) -> None:
         self._file_to_datetime_history[file.uri] = file.last_modified.strftime(self.DATE_TIME_FORMAT)
         if len(self._file_to_datetime_history) > self.DEFAULT_MAX_HISTORY_SIZE:
-            # Get the earliest file based on its last modified date and its uri
-            oldest_file = self._compute_earliest_file_in_history()
-            if oldest_file:
+            if oldest_file := self._compute_earliest_file_in_history():
                 del self._file_to_datetime_history[oldest_file.uri]
             else:
                 raise Exception(
@@ -49,8 +47,10 @@ class DefaultFileBasedCursor(AbstractFileBasedCursor):
                 )
 
     def get_state(self) -> StreamState:
-        state = {"history": self._file_to_datetime_history, self.CURSOR_FIELD: self._get_cursor()}
-        return state
+        return {
+            "history": self._file_to_datetime_history,
+            self.CURSOR_FIELD: self._get_cursor(),
+        }
 
     def _get_cursor(self) -> Optional[str]:
         """
@@ -81,23 +81,22 @@ class DefaultFileBasedCursor(AbstractFileBasedCursor):
             else:
                 return file.last_modified > updated_at_from_history
             return file.last_modified > updated_at_from_history
-        if self._is_history_full():
-            if self._initial_earliest_file_in_history is None:
-                return True
-            if file.last_modified > self._initial_earliest_file_in_history.last_modified:
-                # If the history is partial and the file's datetime is strictly greater than the earliest file in the history,
-                # we should sync it
-                return True
-            elif file.last_modified == self._initial_earliest_file_in_history.last_modified:
-                # If the history is partial and the file's datetime is equal to the earliest file in the history,
-                # we should sync it if its uri is strictly greater than the earliest file in the history
-                return file.uri > self._initial_earliest_file_in_history.uri
-            else:
-                # Otherwise, only sync the file if it has been modified since the start of the time window
-                return file.last_modified >= self.get_start_time()
-        else:
+        if not self._is_history_full():
             # The file is not in the history and the history is complete. We know we need to sync the file
             return True
+        if self._initial_earliest_file_in_history is None:
+            return True
+        if file.last_modified > self._initial_earliest_file_in_history.last_modified:
+            # If the history is partial and the file's datetime is strictly greater than the earliest file in the history,
+            # we should sync it
+            return True
+        elif file.last_modified == self._initial_earliest_file_in_history.last_modified:
+            # If the history is partial and the file's datetime is equal to the earliest file in the history,
+            # we should sync it if its uri is strictly greater than the earliest file in the history
+            return file.uri > self._initial_earliest_file_in_history.uri
+        else:
+            # Otherwise, only sync the file if it has been modified since the start of the time window
+            return file.last_modified >= self.get_start_time()
 
     def get_files_to_sync(self, all_files: Iterable[RemoteFile], logger: logging.Logger) -> Iterable[RemoteFile]:
         if self._is_history_full():
@@ -123,10 +122,9 @@ class DefaultFileBasedCursor(AbstractFileBasedCursor):
     def _compute_start_time(self) -> datetime:
         if not self._file_to_datetime_history:
             return datetime.min
-        else:
-            earliest = min(self._file_to_datetime_history.values())
-            earliest_dt = datetime.strptime(earliest, self.DATE_TIME_FORMAT)
-            if self._is_history_full():
-                time_window = datetime.now() - self._time_window_if_history_is_full
-                earliest_dt = min(earliest_dt, time_window)
-            return earliest_dt
+        earliest = min(self._file_to_datetime_history.values())
+        earliest_dt = datetime.strptime(earliest, self.DATE_TIME_FORMAT)
+        if self._is_history_full():
+            time_window = datetime.now() - self._time_window_if_history_is_full
+            earliest_dt = min(earliest_dt, time_window)
+        return earliest_dt

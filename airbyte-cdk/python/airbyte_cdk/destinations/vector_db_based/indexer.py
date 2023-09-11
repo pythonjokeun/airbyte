@@ -20,7 +20,6 @@ class Indexer(ABC):
 
     def __init__(self, config: Any):
         self.config = config
-        pass
 
     def pre_sync(self, catalog: ConfiguredAirbyteCatalog) -> None:
         """
@@ -55,7 +54,5 @@ T = TypeVar("T")
 def chunks(iterable: Iterable[T], batch_size: int) -> Generator[Tuple[T, ...], None, None]:
     """A helper function to break an iterable into chunks of size batch_size."""
     it = iter(iterable)
-    chunk = tuple(itertools.islice(it, batch_size))
-    while chunk:
+    while chunk := tuple(itertools.islice(it, batch_size)):
         yield chunk
-        chunk = tuple(itertools.islice(it, batch_size))

@@ -60,10 +60,9 @@ def _is_context(context):
     """
     Check if the given object is a valid context object.
     """
-    return (
-        isinstance(context, OpExecutionContext)
-        or isinstance(context, SensorEvaluationContext)
-        or isinstance(context, AssetExecutionContext)
+    return isinstance(
+        context,
+        (OpExecutionContext, SensorEvaluationContext, AssetExecutionContext),
     )
 
 
@@ -81,7 +80,7 @@ def _get_context_from_args_kwargs(args, kwargs):
 
     # otherwise raise an error
     raise Exception(
-        f"No context provided to Sentry Transaction. When using @instrument, ensure that the asset/op has a context as the first argument."
+        "No context provided to Sentry Transaction. When using @instrument, ensure that the asset/op has a context as the first argument."
     )
 
 

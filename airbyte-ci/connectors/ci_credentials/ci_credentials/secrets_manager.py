@@ -17,7 +17,7 @@ from common_utils import GoogleApi, Logger
 
 from .models import DEFAULT_SECRET_FILE, RemoteSecret, Secret
 
-DEFAULT_SECRET_FILE_WITH_EXT = DEFAULT_SECRET_FILE + ".json"
+DEFAULT_SECRET_FILE_WITH_EXT = f"{DEFAULT_SECRET_FILE}.json"
 
 GSM_SCOPES = ("https://www.googleapis.com/auth/cloud-platform",)
 
@@ -102,13 +102,7 @@ class SecretsManager:
                     self.logger.warning(f"incorrect the label connector '{connector_name}' of secret {secret_name}")
                     continue
                 filename = secret_info.get("labels", {}).get("filename")
-                if filename:
-                    # all secret file names should be finished with ".json"
-                    # but '.' cant be used in google, so we append it
-                    filename = f"{filename}.json"
-                else:
-                    # the "filename" label is optional.
-                    filename = DEFAULT_SECRET_FILE_WITH_EXT
+                filename = f"{filename}.json" if filename else DEFAULT_SECRET_FILE_WITH_EXT
                 log_name = f'{secret_name.split("/")[-1]}({connector_name})'
                 self.logger.info(f"found GSM secret: {log_name} = > {filename}")
 
@@ -162,7 +156,10 @@ class SecretsManager:
                             line = str(line).strip()
                             # don't output } and such
                             if len(line) > 1:
-                                if not os.getenv("VERSION") in ["dev", "dagger_ci"]:
+                                if os.getenv("VERSION") not in [
+                                    "dev",
+                                    "dagger_ci",
+                                ]:
                                     # has to be at the beginning of line for Github to notice it
                                     print(f"::add-mask::{line}")
                                 if os.getenv("VERSION") == "dagger_ci":

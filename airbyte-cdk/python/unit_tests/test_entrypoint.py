@@ -75,7 +75,7 @@ MESSAGE_FROM_REPOSITORY = AirbyteMessage(
 @pytest.fixture
 def entrypoint(mocker) -> AirbyteEntrypoint:
     message_repository = MagicMock()
-    message_repository.consume_queue.side_effect = [[message for message in [MESSAGE_FROM_REPOSITORY]], []]
+    message_repository.consume_queue.side_effect = [[MESSAGE_FROM_REPOSITORY], []]
     mocker.patch.object(MockSource, "message_repository", new_callable=mocker.PropertyMock, return_value=message_repository)
     return AirbyteEntrypoint(MockSource())
 

@@ -54,9 +54,9 @@ class DestinationConvex(Destination):
                 streams_to_delete.append(configured_stream.stream.name)
             elif configured_stream.destination_sync_mode == DestinationSyncMode.append_dedup and configured_stream.primary_key:
                 indexes_to_add[configured_stream.stream.name] = configured_stream.primary_key
-        if len(streams_to_delete) != 0:
+        if streams_to_delete:
             writer.delete_tables(streams_to_delete)
-        if len(indexes_to_add) != 0:
+        if indexes_to_add:
             writer.add_indexes(indexes_to_add)
 
         # Process records
@@ -84,9 +84,7 @@ class DestinationConvex(Destination):
         writer.flush()
 
     def table_name_for_stream(self, namespace: Optional[str], stream_name: str) -> str:
-        if namespace is not None:
-            return f"{namespace}_{stream_name}"
-        return stream_name
+        return f"{namespace}_{stream_name}" if namespace is not None else stream_name
 
     def table_metadata(
         self,

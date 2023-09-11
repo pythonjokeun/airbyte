@@ -99,11 +99,12 @@ def get_selected_connectors_with_modified_files(
         connector_with_modified_files = ConnectorWithModifiedFiles(
             technical_name=connector.technical_name, modified_files=get_connector_modified_files(connector, modified_files)
         )
-        if not metadata_changes_only:
+        if (
+            metadata_changes_only
+            and connector_with_modified_files.has_metadata_change
+            or not metadata_changes_only
+        ):
             selected_connectors_with_modified_files.append(connector_with_modified_files)
-        else:
-            if connector_with_modified_files.has_metadata_change:
-                selected_connectors_with_modified_files.append(connector_with_modified_files)
     return selected_connectors_with_modified_files
 
 
@@ -243,7 +244,7 @@ def test(
     try:
         anyio.run(
             run_connectors_pipelines,
-            [connector_context for connector_context in connectors_tests_contexts],
+            list(connectors_tests_contexts),
             run_connector_test_pipeline,
             "Test Pipeline",
             ctx.obj["concurrency"],

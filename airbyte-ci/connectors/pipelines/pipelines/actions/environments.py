@@ -46,16 +46,26 @@ def with_python_base(context: PipelineContext, python_version: str = "3.10") -> 
 
     pip_cache: CacheVolume = context.dagger_client.cache_volume("pip_cache")
 
-    base_container = (
+    return (
         context.dagger_client.container()
         .from_(f"python:{python_version}-slim")
         .with_exec(["apt-get", "update"])
-        .with_exec(["apt-get", "install", "-y", "build-essential", "cmake", "g++", "libffi-dev", "libstdc++6", "git"])
+        .with_exec(
+            [
+                "apt-get",
+                "install",
+                "-y",
+                "build-essential",
+                "cmake",
+                "g++",
+                "libffi-dev",
+                "libstdc++6",
+                "git",
+            ]
+        )
         .with_mounted_cache("/root/.cache/pip", pip_cache)
         .with_exec(["pip", "install", "pip==23.1.2"])
     )
-
-    return base_container
 
 
 def with_testing_dependencies(context: PipelineContext) -> Container:
@@ -118,7 +128,10 @@ async def with_installed_pipx_package(
 
     local_dependencies = await find_local_dependencies_in_pyproject_toml(context, container, package_source_code_path, exclude=exclude)
     for dependency_directory in local_dependencies:
-        container = container.with_mounted_directory("/" + dependency_directory, context.get_repo_dir(dependency_directory))
+        container = container.with_mounted_directory(
+            f"/{dependency_directory}",
+            context.get_repo_dir(dependency_directory),
+        )
 
     container = container.with_exec(["pipx", "install", f"/{package_source_code_path}"])
 
@@ -145,8 +158,9 @@ def with_python_package(
     """
     package_source_code_directory: Directory = context.get_repo_dir(package_source_code_path, exclude=exclude)
     work_dir_path = f"/{package_source_code_path}"
-    container = python_environment.with_mounted_directory(work_dir_path, package_source_code_directory).with_workdir(work_dir_path)
-    return container
+    return python_environment.with_mounted_directory(
+        work_dir_path, package_source_code_directory
+    ).with_workdir(work_dir_path)
 
 
 async def find_local_python_dependencies(
@@ -212,8 +226,7 @@ async def find_local_dependencies_in_setup_py(python_package: Container) -> List
 
     for dependency_line in dependency_in_requires_txt:
         if "file://" in dependency_line:
-            match = re.search(r"file:///(.+)", dependency_line)
-            if match:
+            if match := re.search(r"file:///(.+)", dependency_line):
                 local_setup_dependency_paths.append([match.group(1)][0])
     return local_setup_dependency_paths
 
@@ -310,7 +323,10 @@ async def with_installed_python_package(
     local_dependencies = await find_local_python_dependencies(context, package_source_code_path)
 
     for dependency_directory in local_dependencies:
-        container = container.with_mounted_directory("/" + dependency_directory, context.get_repo_dir(dependency_directory))
+        container = container.with_mounted_directory(
+            f"/{dependency_directory}",
+            context.get_repo_dir(dependency_directory),
+        )
 
     has_setup_py, has_requirements_txt = await check_path_in_workdir(container, "setup.py"), await check_path_in_workdir(
         container, "requirements.txt"
@@ -323,7 +339,10 @@ async def with_installed_python_package(
 
     if additional_dependency_groups:
         container = container.with_exec(
-            install_connector_package_cmd[:-1] + [install_connector_package_cmd[-1] + f"[{','.join(additional_dependency_groups)}]"]
+            install_connector_package_cmd[:-1]
+            + [
+                f"{install_connector_package_cmd[-1]}[{','.join(additional_dependency_groups)}]"
+            ]
         )
 
     return container
@@ -587,8 +606,9 @@ async def load_image_to_docker_host(context: ConnectorContext, tar_file: File, i
     if "sha256:" in image_load_output:
         image_id = image_load_output.replace("\n", "").replace("Loaded image ID: sha256:", "")
         await docker_cli.with_exec(["docker", "tag", image_id, image_tag])
-    image_sha = json.loads(await docker_cli.with_exec(["docker", "inspect", image_tag]).stdout())[0].get("Id")
-    return image_sha
+    return json.loads(
+        await docker_cli.with_exec(["docker", "inspect", image_tag]).stdout()
+    )[0].get("Id")
 
 
 def with_pipx(base_python_container: Container) -> Container:
@@ -600,9 +620,9 @@ def with_pipx(base_python_container: Container) -> Container:
     Returns:
         Container: A python environment with pipx installed.
     """
-    python_with_pipx = with_pip_packages(base_python_container, ["pipx"]).with_env_variable("PIPX_BIN_DIR", "/usr/local/bin")
-
-    return python_with_pipx
+    return with_pip_packages(
+        base_python_container, ["pipx"]
+    ).with_env_variable("PIPX_BIN_DIR", "/usr/local/bin")
 
 
 def with_poetry(context: PipelineContext) -> Container:
@@ -615,12 +635,7 @@ def with_poetry(context: PipelineContext) -> Container:
     """
     python_base_environment: Container = with_python_base(context)
     python_with_git = with_debian_packages(python_base_environment, ["git"])
-    python_with_poetry = with_pip_packages(python_with_git, ["poetry"])
-
-    # poetry_cache: CacheVolume = context.dagger_client.cache_volume("poetry_cache")
-    # poetry_with_cache = python_with_poetry.with_mounted_cache("/root/.cache/pypoetry", poetry_cache, sharing=CacheSharingMode.SHARED)
-
-    return python_with_poetry
+    return with_pip_packages(python_with_git, ["poetry"])
 
 
 def with_poetry_module(context: PipelineContext, parent_dir: Directory, module_path: str) -> Container:
@@ -845,10 +860,14 @@ async def with_airbyte_java_connector(context: ConnectorContext, connector_java_
 async def get_cdk_version_from_python_connector(python_connector: Container) -> Optional[str]:
     pip_freeze_stdout = await python_connector.with_entrypoint("pip").with_exec(["freeze"]).stdout()
     pip_dependencies = [dep.split("==") for dep in pip_freeze_stdout.split("\n")]
-    for package_name, package_version in pip_dependencies:
-        if package_name == "airbyte-cdk":
-            return package_version
-    return None
+    return next(
+        (
+            package_version
+            for package_name, package_version in pip_dependencies
+            if package_name == "airbyte-cdk"
+        ),
+        None,
+    )
 
 
 async def with_airbyte_python_connector(context: ConnectorContext, build_platform: Platform) -> Container:
@@ -886,10 +905,10 @@ async def finalize_build(context: ConnectorContext, connector_container: Contain
 
     has_finalize_bash_script = "finalize_build.sh" in finalize_scripts
     has_finalize_python_script = "finalize_build.py" in finalize_scripts
-    if has_finalize_python_script and has_finalize_bash_script:
-        raise Exception("Connector has both finalize_build.sh and finalize_build.py, please remove one of them")
-
     if has_finalize_python_script:
+        if has_finalize_bash_script:
+            raise Exception("Connector has both finalize_build.sh and finalize_build.py, please remove one of them")
+
         context.logger.info(f"{context.connector.technical_name} has a finalize_build.py script, running it to finalize build...")
         module_path = context.connector.code_directory / "finalize_build.py"
         connector_finalize_module_spec = importlib.util.spec_from_file_location(

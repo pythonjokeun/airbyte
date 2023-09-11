@@ -52,21 +52,22 @@ class OffsetIncrement(PaginationStrategy):
     def next_page_token(self, response: requests.Response, last_records: List[Mapping[str, Any]]) -> Optional[Any]:
         decoded_response = self.decoder.decode(response)
 
-        # Stop paginating when there are fewer records than the page size or the current page has no records
-        if (self._page_size and len(last_records) < self._page_size.eval(self.config, response=decoded_response)) or len(last_records) == 0:
+        if (
+            self._page_size
+            and len(last_records)
+            < self._page_size.eval(self.config, response=decoded_response)
+        ) or not last_records:
             return None
-        else:
-            self._offset += len(last_records)
-            return self._offset
+        self._offset += len(last_records)
+        return self._offset
 
     def reset(self):
         self._offset = 0
 
     def get_page_size(self) -> Optional[int]:
-        if self._page_size:
-            page_size = self._page_size.eval(self.config)
-            if not isinstance(page_size, int):
-                raise Exception(f"{page_size} is of type {type(page_size)}. Expected {int}")
-            return page_size
-        else:
+        if not self._page_size:
             return self._page_size
+        page_size = self._page_size.eval(self.config)
+        if not isinstance(page_size, int):
+            raise Exception(f"{page_size} is of type {type(page_size)}. Expected {int}")
+        return page_size

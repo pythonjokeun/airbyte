@@ -50,7 +50,10 @@ def test_record_passes_validation_policy(
     validation_policy: ValidationPolicy,
     expected_result: bool
 ) -> None:
-    if validation_policy == ValidationPolicy.wait_for_discover and expected_result is False:
+    if (
+        validation_policy == ValidationPolicy.wait_for_discover
+        and not expected_result
+    ):
         with pytest.raises(StopSyncPerValidationPolicy):
             DEFAULT_SCHEMA_VALIDATION_POLICIES[validation_policy].record_passes_validation_policy(record, schema)
     else:

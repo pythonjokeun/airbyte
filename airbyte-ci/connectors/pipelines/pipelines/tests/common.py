@@ -37,17 +37,14 @@ class VersionCheck(Step, ABC):
         response = requests.get(self.github_master_metadata_url)
 
         # New connectors will not have a metadata file in master
-        if not response.ok:
-            return None
-        return yaml.safe_load(response.text)
+        return None if not response.ok else yaml.safe_load(response.text)
 
     @property
     def master_connector_version(self) -> semver.Version:
-        metadata = self.master_metadata
-        if not metadata:
+        if metadata := self.master_metadata:
+            return semver.Version.parse(str(metadata["data"]["dockerImageTag"]))
+        else:
             return semver.Version.parse("0.0.0")
-
-        return semver.Version.parse(str(metadata["data"]["dockerImageTag"]))
 
     @property
     def current_connector_version(self) -> semver.Version:
@@ -100,8 +97,13 @@ class VersionIncrementCheck(VersionCheck):
     @property
     def should_run(self) -> bool:
         for filename in self.context.modified_files:
-            relative_path = str(filename).replace(str(self.context.connector.code_directory) + "/", "")
-            if not any([relative_path.startswith(to_bypass) for to_bypass in self.BYPASS_CHECK_FOR]):
+            relative_path = str(filename).replace(
+                f"{str(self.context.connector.code_directory)}/", ""
+            )
+            if not any(
+                relative_path.startswith(to_bypass)
+                for to_bypass in self.BYPASS_CHECK_FOR
+            ):
                 return True
         return False
 

@@ -28,7 +28,9 @@ def qa_report_columns(qa_report: pd.DataFrame) -> set:
 
 
 def test_all_columns_are_declared(qa_report_columns: set):
-    expected_columns = set([field.name for field in models.ConnectorQAReport.__fields__.values()])
+    expected_columns = {
+        field.name for field in models.ConnectorQAReport.__fields__.values()
+    }
     assert qa_report_columns == expected_columns
 
 
@@ -121,11 +123,14 @@ def test_get_connectors_eligible_for_cloud(qa_report: pd.DataFrame):
     qa_report["is_eligible_for_promotion_to_cloud"] = True
     connectors_eligible_for_cloud = list(validations.get_connectors_eligible_for_cloud(qa_report))
     assert len(qa_report) == len(connectors_eligible_for_cloud)
-    assert all([c.is_eligible_for_promotion_to_cloud for c in connectors_eligible_for_cloud])
+    assert all(
+        c.is_eligible_for_promotion_to_cloud
+        for c in connectors_eligible_for_cloud
+    )
 
     qa_report["is_eligible_for_promotion_to_cloud"] = False
     connectors_eligible_for_cloud = list(validations.get_connectors_eligible_for_cloud(qa_report))
-    assert len(connectors_eligible_for_cloud) == 0
+    assert not connectors_eligible_for_cloud
 
 
 @pytest.mark.parametrize(

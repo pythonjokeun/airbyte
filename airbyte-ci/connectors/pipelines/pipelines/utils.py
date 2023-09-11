@@ -255,8 +255,7 @@ def get_modified_files_in_branch_local(current_git_revision: str, diffed_branch:
     ).split("\n")
     status_output = airbyte_repo.git.status("--porcelain")
     for not_committed_change in status_output.split("\n"):
-        file_path = not_committed_change.strip().split(" ")[-1]
-        if file_path:
+        if file_path := not_committed_change.strip().split(" ")[-1]:
             modified_files.append(file_path)
     return set(modified_files)
 
@@ -585,9 +584,7 @@ def sanitize_gcs_credentials(raw_value: Optional[str]) -> Optional[str]:
     Returns:
         str: The raw value string if it was successfully parsed.
     """
-    if raw_value is None:
-        return None
-    return json.dumps(json.loads(raw_value))
+    return None if raw_value is None else json.dumps(json.loads(raw_value))
 
 
 def format_duration(time_delta: datetime.timedelta) -> str:
