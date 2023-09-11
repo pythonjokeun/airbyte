@@ -127,7 +127,10 @@ async def run_all_tests(context: ConnectorContext) -> List[StepResult]:
             BuildConnectorImage(context, LOCAL_BUILD_PLATFORM),
         ]
     )
-    if any([step_result.status is StepStatus.FAILURE for step_result in step_results]):
+    if any(
+        step_result.status is StepStatus.FAILURE
+        for step_result in step_results
+    ):
         return step_results
     connector_package_install_results, build_connector_image_results = step_results[0], step_results[1]
     connector_image_tar_file, _ = await export_container_to_tarball(context, build_connector_image_results.output_artifact)

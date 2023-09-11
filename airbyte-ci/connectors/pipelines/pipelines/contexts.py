@@ -244,9 +244,9 @@ class PipelineContext:
         """
         if exception_value is not None or report is None:
             return ContextState.ERROR
-        if report is not None and report.failed_steps:
+        if report.failed_steps:
             return ContextState.FAILURE
-        if report is not None and report.success:
+        if report.success:
             return ContextState.SUCCESSFUL
         raise Exception(
             f"The final state of the context could not be determined for the report and exception value provided. Report: {report}, Exception: {exception_value}"
@@ -520,7 +520,9 @@ class PublishConnectorContext(ConnectorContext):
         self.docker_hub_password = docker_hub_password
 
         pipeline_name = f"Publish {connector.technical_name}"
-        pipeline_name = pipeline_name + " (pre-release)" if pre_release else pipeline_name
+        pipeline_name = (
+            f"{pipeline_name} (pre-release)" if pre_release else pipeline_name
+        )
 
         super().__init__(
             pipeline_name=pipeline_name,

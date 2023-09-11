@@ -44,7 +44,7 @@ class TestInMemoryMessageRepository:
     def test_given_no_messages_when_consume_queue_then_return_empty(self):
         repo = InMemoryMessageRepository()
         messages = list(repo.consume_queue())
-        assert messages == []
+        assert not messages
 
     def test_given_messages_when_consume_queue_then_return_messages(self):
         repo = InMemoryMessageRepository()

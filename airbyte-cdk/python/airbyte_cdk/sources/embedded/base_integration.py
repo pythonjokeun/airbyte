@@ -43,8 +43,9 @@ class BaseEmbeddedIntegration(ABC, Generic[TConfig, TOutput]):
 
         for message in self.source.read(self.config, configured_catalog, state):
             if message.type == Type.RECORD:
-                output = self._handle_record(message.record, get_defined_id(stream, message.record.data))
-                if output:
+                if output := self._handle_record(
+                    message.record, get_defined_id(stream, message.record.data)
+                ):
                     yield output
             elif message.type is Type.STATE and message.state:
                 self.last_state = message.state

@@ -57,7 +57,7 @@ class ContentTypeAwareGCSFileManager(GCSFileManager):
         """
         key = check.opt_str_param(key, "key", default=str(uuid.uuid4()))
         check_file_like_obj(file_obj)
-        gcs_key = self.get_full_key(key + (("." + ext) if ext is not None else ""))
+        gcs_key = self.get_full_key(key + (f".{ext}" if ext is not None else ""))
 
         bucket_obj = self._client.bucket(self._gcs_bucket)
         blob = bucket_obj.blob(gcs_key)
@@ -72,7 +72,7 @@ class ContentTypeAwareGCSFileManager(GCSFileManager):
         return PublicGCSFileHandle(self._gcs_bucket, gcs_key)
 
     def delete_by_key(self, key: str, ext: Optional[str] = None) -> Optional[PublicGCSFileHandle]:
-        gcs_key = self.get_full_key(key + (("." + ext) if ext is not None else ""))
+        gcs_key = self.get_full_key(key + (f".{ext}" if ext is not None else ""))
         bucket_obj = self._client.bucket(self._gcs_bucket)
         blob = bucket_obj.blob(gcs_key)
 

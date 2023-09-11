@@ -43,7 +43,7 @@ class ParquetParser(FileTypeParser):
         # Inferred partition schema
         partition_columns = {partition.split("=")[0]: {"type": "string"} for partition in self._extract_partitions(file.uri)}
 
-        schema.update(partition_columns)
+        schema |= partition_columns
         return schema
 
     def parse_records(
@@ -110,27 +110,25 @@ class ParquetParser(FileTypeParser):
                 "values": parquet_value.dictionary.tolist(),
             }
         if pa.types.is_map(parquet_value.type):
-            return {k: v for k, v in parquet_value.as_py()}
+            return dict(parquet_value.as_py())
 
         if pa.types.is_null(parquet_value.type):
             return None
 
-        # Convert duration to seconds, then convert to the appropriate unit
-        if pa.types.is_duration(parquet_value.type):
-            duration = parquet_value.as_py()
-            duration_seconds = duration.total_seconds()
-            if parquet_value.type.unit == "s":
-                return duration_seconds
-            elif parquet_value.type.unit == "ms":
-                return duration_seconds * 1000
-            elif parquet_value.type.unit == "us":
-                return duration_seconds * 1_000_000
-            elif parquet_value.type.unit == "ns":
-                return duration_seconds * 1_000_000_000 + duration.nanoseconds
-            else:
-                raise ValueError(f"Unknown duration unit: {parquet_value.type.unit}")
-        else:
+        if not pa.types.is_duration(parquet_value.type):
             return parquet_value.as_py()
+        duration = parquet_value.as_py()
+        duration_seconds = duration.total_seconds()
+        if parquet_value.type.unit == "s":
+            return duration_seconds
+        elif parquet_value.type.unit == "ms":
+            return duration_seconds * 1000
+        elif parquet_value.type.unit == "us":
+            return duration_seconds * 1_000_000
+        elif parquet_value.type.unit == "ns":
+            return duration_seconds * 1_000_000_000 + duration.nanoseconds
+        else:
+            raise ValueError(f"Unknown duration unit: {parquet_value.type.unit}")
 
     @staticmethod
     def parquet_type_to_schema_type(parquet_type: pa.DataType, parquet_format: ParquetFormat) -> Mapping[str, str]:

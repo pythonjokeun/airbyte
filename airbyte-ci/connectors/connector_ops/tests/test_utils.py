@@ -87,9 +87,15 @@ def test_parse_dependencies(gradle_file_with_dependencies):
     gradle_file, expected_regular_dependencies, expected_test_dependencies = gradle_file_with_dependencies
     regular_dependencies, test_dependencies = utils.parse_dependencies(gradle_file)
     assert len(regular_dependencies) == len(expected_regular_dependencies)
-    assert all([regular_dependency in expected_regular_dependencies for regular_dependency in regular_dependencies])
+    assert all(
+        regular_dependency in expected_regular_dependencies
+        for regular_dependency in regular_dependencies
+    )
     assert len(test_dependencies) == len(expected_test_dependencies)
-    assert all([test_dependency in expected_test_dependencies for test_dependency in test_dependencies])
+    assert all(
+        test_dependency in expected_test_dependencies
+        for test_dependency in test_dependencies
+    )
 
 
 @pytest.mark.parametrize("with_test_dependencies", [True, False])
@@ -116,8 +122,6 @@ def test_get_all_gradle_dependencies(with_test_dependencies):
             Path("airbyte-integrations/connectors/source-relational-db"),
             Path("airbyte-integrations/bases/standard-source-test"),
         ]
-        assert len(all_dependencies) == len(expected_dependencies)
-        assert all([dependency in expected_dependencies for dependency in all_dependencies])
     else:
         all_dependencies = utils.get_all_gradle_dependencies(build_file, with_test_dependencies=False)
         expected_dependencies = [
@@ -134,5 +138,8 @@ def test_get_all_gradle_dependencies(with_test_dependencies):
             Path("airbyte-integrations/connectors/source-jdbc"),
             Path("airbyte-integrations/connectors/source-relational-db"),
         ]
-        assert len(all_dependencies) == len(expected_dependencies)
-        assert all([dependency in expected_dependencies for dependency in all_dependencies])
+
+    assert len(all_dependencies) == len(expected_dependencies)
+    assert all(
+        dependency in expected_dependencies for dependency in all_dependencies
+    )

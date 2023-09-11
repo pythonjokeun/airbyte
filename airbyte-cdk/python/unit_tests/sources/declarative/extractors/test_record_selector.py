@@ -91,9 +91,15 @@ def test_record_filter(test_name, field_path, filter_template, body, expected_da
         response=response, stream_state=stream_state, stream_slice=stream_slice, next_page_token=next_page_token
     )
     assert actual_records == [Record(data, stream_slice) for data in expected_data]
-    calls = []
-    for record in expected_data:
-        calls.append(call(record, config=config, stream_state=stream_state, stream_slice=stream_slice))
+    calls = [
+        call(
+            record,
+            config=config,
+            stream_state=stream_state,
+            stream_slice=stream_slice,
+        )
+        for record in expected_data
+    ]
     for transformation in transformations:
         assert transformation.transform.call_count == len(expected_data)
         transformation.transform.assert_has_calls(calls)

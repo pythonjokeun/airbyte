@@ -56,10 +56,7 @@ def get_comparable_type(value: Any) -> Optional[ComparableType]:
         return ComparableType.NUMBER
     if value == "string":
         return ComparableType.STRING
-    if value == "object":
-        return ComparableType.OBJECT
-    else:
-        return None
+    return ComparableType.OBJECT if value == "object" else None
 
 
 def get_inferred_type(value: Any) -> Optional[ComparableType]:
@@ -73,10 +70,7 @@ def get_inferred_type(value: Any) -> Optional[ComparableType]:
         return ComparableType.NUMBER
     if isinstance(value, str):
         return ComparableType.STRING
-    if isinstance(value, dict):
-        return ComparableType.OBJECT
-    else:
-        return None
+    return ComparableType.OBJECT if isinstance(value, dict) else None
 
 
 def merge_schemas(schema1: SchemaType, schema2: SchemaType) -> SchemaType:
@@ -232,14 +226,12 @@ def type_mapping_to_jsonschema(input_schema: Optional[Union[str, Mapping[str, st
                 details=f"Invalid input schema; expected mapping in the format column_name: type, got {input_schema}.",
             )
 
-        _json_schema_type = TYPE_PYTHON_MAPPING.get(type_name.casefold())
+        if _json_schema_type := TYPE_PYTHON_MAPPING.get(type_name.casefold()):
+            result_schema[col_name] = {"type": _json_schema_type[0]}
 
-        if not _json_schema_type:
+        else:
             raise ConfigValidationError(
                 FileBasedSourceError.ERROR_PARSING_USER_PROVIDED_SCHEMA, details=f"Invalid type '{type_name}' for property '{col_name}'."
             )
-
-        json_schema_type = _json_schema_type[0]
-        result_schema[col_name] = {"type": json_schema_type}
 
     return {"type": "object", "properties": result_schema}

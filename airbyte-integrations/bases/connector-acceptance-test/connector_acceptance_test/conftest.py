@@ -61,10 +61,10 @@ def connector_config_path_fixture(inputs, base_path) -> Path:
     """Fixture with connector's config path. The path to the latest updated configurations will be returned if any."""
     original_configuration_path = Path(base_path) / getattr(inputs, "config_path")
     updated_configurations_glob = f"{original_configuration_path.parent}/updated_configurations/{original_configuration_path.stem}|**{original_configuration_path.suffix}"
-    existing_configurations_path_creation_time = [
-        (config_file_path, os.path.getctime(config_file_path)) for config_file_path in glob(updated_configurations_glob)
-    ]
-    if existing_configurations_path_creation_time:
+    if existing_configurations_path_creation_time := [
+        (config_file_path, os.path.getctime(config_file_path))
+        for config_file_path in glob(updated_configurations_glob)
+    ]:
         existing_configurations_path_creation_time.sort(key=lambda x: x[1])
         most_recent_configuration_path = existing_configurations_path_creation_time[-1][0]
     else:
@@ -130,8 +130,7 @@ def invalid_connector_config_fixture(base_path, invalid_connector_config_path) -
 @pytest.fixture(name="malformed_connector_config")
 def malformed_connector_config_fixture(connector_config) -> MutableMapping[str, Any]:
     """TODO: drop required field, add extra"""
-    malformed_config = copy.deepcopy(connector_config)
-    return malformed_config
+    return copy.deepcopy(connector_config)
 
 
 @pytest.fixture(name="connector_spec")
@@ -194,7 +193,10 @@ async def previous_connector_docker_runner_fixture(previous_connector_image_name
 def empty_streams_fixture(inputs, test_strictness_level) -> Set[EmptyStreamConfiguration]:
     empty_streams = getattr(inputs, "empty_streams", set())
     if test_strictness_level is Config.TestStrictnessLevel.high and empty_streams:
-        all_empty_streams_have_bypass_reasons = all([bool(empty_stream.bypass_reason) for empty_stream in inputs.empty_streams])
+        all_empty_streams_have_bypass_reasons = all(
+            bool(empty_stream.bypass_reason)
+            for empty_stream in inputs.empty_streams
+        )
         if not all_empty_streams_have_bypass_reasons:
             pytest.fail("A bypass_reason must be filled in for all empty streams when test_strictness_level is set to high.")
     return empty_streams
@@ -205,7 +207,10 @@ def ignored_fields_fixture(inputs, test_strictness_level) -> Optional[Mapping[st
     ignored_fields = getattr(inputs, "ignored_fields", {}) or {}
     if test_strictness_level is Config.TestStrictnessLevel.high and ignored_fields:
         all_ignored_fields_have_bypass_reasons = all(
-            [bool(ignored_field.bypass_reason) for ignored_field in itertools.chain.from_iterable(inputs.ignored_fields.values())]
+            bool(ignored_field.bypass_reason)
+            for ignored_field in itertools.chain.from_iterable(
+                inputs.ignored_fields.values()
+            )
         )
         if not all_ignored_fields_have_bypass_reasons:
             pytest.fail("A bypass_reason must be filled in for all ignored fields when test_strictness_level is set to high.")
@@ -228,7 +233,9 @@ def expected_records_by_stream_fixture(
     def enforce_high_strictness_level_rules(expect_records_config, configured_catalog, empty_streams, records_by_stream) -> Optional[str]:
         error_prefix = "High strictness level error: "
         if expect_records_config is None:
-            pytest.fail(error_prefix + "expect_records must be configured for the basic_read test.")
+            pytest.fail(
+                f"{error_prefix}expect_records must be configured for the basic_read test."
+            )
         elif expect_records_config.path:
             not_seeded_streams = find_not_seeded_streams(configured_catalog, empty_streams, records_by_stream)
             if not_seeded_streams:
@@ -258,8 +265,11 @@ def find_not_seeded_streams(
     empty_streams: Set[EmptyStreamConfiguration],
     records_by_stream: MutableMapping[str, List[MutableMapping]],
 ) -> Set[str]:
-    stream_names_in_catalog = set([configured_stream.stream.name for configured_stream in configured_catalog.streams])
-    empty_streams_names = set([stream.name for stream in empty_streams])
+    stream_names_in_catalog = {
+        configured_stream.stream.name
+        for configured_stream in configured_catalog.streams
+    }
+    empty_streams_names = {stream.name for stream in empty_streams}
     expected_record_stream_names = set(records_by_stream.keys())
     expected_seeded_stream_names = stream_names_in_catalog - empty_streams_names
 
@@ -365,7 +375,6 @@ def pytest_sessionfinish(session, exitstatus):
         )
     except Exception as e:
         logger.info(e)  # debug
-        pass
 
 
 @pytest.fixture(name="connector_metadata")

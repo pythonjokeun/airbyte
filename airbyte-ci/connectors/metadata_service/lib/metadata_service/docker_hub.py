@@ -22,8 +22,7 @@ def get_docker_hub_auth_token() -> str:
     if response.status_code != 200:
         raise ValueError("Failed to authenticate with Docker Hub. Please check your credentials.")
 
-    token = response.json().get("token")
-    return token
+    return response.json().get("token")
 
 
 def is_image_on_docker_hub(image_name: str, version: str) -> bool:

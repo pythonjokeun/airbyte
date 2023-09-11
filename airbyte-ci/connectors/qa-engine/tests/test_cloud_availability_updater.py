@@ -176,19 +176,19 @@ def test_create_pr(mocker, pr_already_created):
     cloud_availability_updater.requests.post.side_effect = [pr_post_response, mocker.Mock()]
     mocker.patch.object(cloud_availability_updater, "pr_already_created_for_branch", mocker.Mock(return_value=pr_already_created))
     mocker.patch.object(cloud_availability_updater, "GITHUB_API_COMMON_HEADERS", {"common": "headers"})
-    expected_pr_url = "https://api.github.com/repos/airbytehq/airbyte/pulls"
-    expected_pr_data = {
-        "title": "my pr title",
-        "body": "my pr body",
-        "head": "my_awesome_branch",
-        "base": "master",
-    }
-    expected_issue_url = "https://api.github.com/repos/airbytehq/airbyte/issues/pr_number/labels"
     expected_issue_data = {"labels": cloud_availability_updater.PR_LABELS}
 
     response = cloud_availability_updater.create_pr("my pr title", "my pr body", "my_awesome_branch", cloud_availability_updater.PR_LABELS)
 
     if not pr_already_created:
+        expected_pr_url = "https://api.github.com/repos/airbytehq/airbyte/pulls"
+        expected_pr_data = {
+            "title": "my pr title",
+            "body": "my pr body",
+            "head": "my_awesome_branch",
+            "base": "master",
+        }
+        expected_issue_url = "https://api.github.com/repos/airbytehq/airbyte/issues/pr_number/labels"
         expected_post_calls = [
             mocker.call(expected_pr_url, headers=cloud_availability_updater.GITHUB_API_COMMON_HEADERS, json=expected_pr_data),
             mocker.call(expected_issue_url, headers=cloud_availability_updater.GITHUB_API_COMMON_HEADERS, json=expected_issue_data),
@@ -303,8 +303,6 @@ def test_batch_deploy_eligible_connectors_to_cloud_repo(
 
     mock_repo = cloud_availability_updater.set_git_identity.return_value
     expected_new_branch_name = "cloud-availability-updater/batch-deploy/20230214"
-    expected_pr_title = "🤖 Cloud Availability updater: new connectors to deploy [20230214]"
-
     cloud_availability_updater.batch_deploy_eligible_connectors_to_cloud_repo(all_connectors)
     cloud_availability_updater.clone_airbyte_repo.assert_called_once_with(dummy_repo_path)
     cloud_availability_updater.set_git_identity.assert_called_once_with(cloud_availability_updater.clone_airbyte_repo.return_value)
@@ -318,6 +316,8 @@ def test_batch_deploy_eligible_connectors_to_cloud_repo(
     )
     if added_connectors:
         cloud_availability_updater.push_branch.assert_called_once_with(mock_repo, expected_new_branch_name)
+        expected_pr_title = "🤖 Cloud Availability updater: new connectors to deploy [20230214]"
+
         cloud_availability_updater.create_pr.assert_called_once_with(
             expected_pr_title,
             cloud_availability_updater.get_pr_body.return_value,

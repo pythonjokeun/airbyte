@@ -27,8 +27,9 @@ def connector_has_allowed_hosts(connector: utils.Connector) -> bool:
 
 
 def check_allowed_hosts():
-    connectors_missing_allowed_hosts = get_connectors_missing_allowed_hosts()
-    if connectors_missing_allowed_hosts:
+    if (
+        connectors_missing_allowed_hosts := get_connectors_missing_allowed_hosts()
+    ):
         logging.error(f"The following connectors must include allowedHosts: {connectors_missing_allowed_hosts}")
         sys.exit(1)
     else:

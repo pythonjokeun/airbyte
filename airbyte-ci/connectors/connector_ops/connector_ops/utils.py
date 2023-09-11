@@ -24,9 +24,9 @@ console = Console()
 DIFFED_BRANCH = os.environ.get("DIFFED_BRANCH", "origin/master")
 OSS_CATALOG_URL = "https://connectors.airbyte.com/files/registries/v0/oss_registry.json"
 CONNECTOR_PATH_PREFIX = "airbyte-integrations/connectors"
-SOURCE_CONNECTOR_PATH_PREFIX = CONNECTOR_PATH_PREFIX + "/source-"
-DESTINATION_CONNECTOR_PATH_PREFIX = CONNECTOR_PATH_PREFIX + "/destination-"
-THIRD_PARTY_CONNECTOR_PATH_PREFIX = CONNECTOR_PATH_PREFIX + "/third_party/"
+SOURCE_CONNECTOR_PATH_PREFIX = f"{CONNECTOR_PATH_PREFIX}/source-"
+DESTINATION_CONNECTOR_PATH_PREFIX = f"{CONNECTOR_PATH_PREFIX}/destination-"
+THIRD_PARTY_CONNECTOR_PATH_PREFIX = f"{CONNECTOR_PATH_PREFIX}/third_party/"
 SCAFFOLD_CONNECTOR_GLOB = "-scaffold-"
 
 
@@ -114,8 +114,7 @@ def get_gradle_dependencies_block(build_file: Path) -> str:
                 break
             else:
                 dependency_block.append(line)
-    dependencies_block = "\n".join(dependency_block)
-    return dependencies_block
+    return "\n".join(dependency_block)
 
 
 def parse_gradle_dependencies(build_file: Path) -> Tuple[List[Path], List[Path]]:
@@ -133,12 +132,10 @@ def parse_gradle_dependencies(build_file: Path) -> Tuple[List[Path], List[Path]]
     project_dependencies: List[Path] = []
     test_dependencies: List[Path] = []
 
-    # Find all matches for test dependencies and regular dependencies
-    matches = re.findall(
+    if matches := re.findall(
         r"(testImplementation|integrationTestJavaImplementation|performanceTestJavaImplementation|implementation|api).*?project\(['\"](.*?)['\"]\)",
         dependencies_block,
-    )
-    if matches:
+    ):
         # Iterate through each match
         for match in matches:
             dependency_type, project_path = match
@@ -228,8 +225,7 @@ class Connector:
 
     @property
     def icon_path(self) -> Path:
-        file_path = self.code_directory / ICON_FILE_NAME
-        return file_path
+        return self.code_directory / ICON_FILE_NAME
 
     @property
     def code_directory(self) -> Path:
@@ -297,10 +293,10 @@ class Connector:
         Returns:
             int: The value
         """
-        default_value = 100
         sl_value = get(self.metadata, "ab_internal.sl")
 
         if sl_value is None:
+            default_value = 100
             logging.warning(
                 f"Connector {self.technical_name} does not have a `ab_internal.sl` defined in metadata.yaml. Defaulting to {default_value}"
             )
@@ -317,10 +313,10 @@ class Connector:
         Returns:
             int: The value
         """
-        default_value = 100
         ql_value = get(self.metadata, "ab_internal.ql")
 
         if ql_value is None:
+            default_value = 100
             logging.warning(
                 f"Connector {self.technical_name} does not have a `ab_internal.ql` defined in metadata.yaml. Defaulting to {default_value}"
             )
@@ -338,10 +334,7 @@ class Connector:
         if self.ab_internal_sl >= IMPORTANT_CONNECTOR_THRESHOLDS["sl"]:
             return True
 
-        if self.ab_internal_ql >= IMPORTANT_CONNECTOR_THRESHOLDS["ql"]:
-            return True
-
-        return False
+        return self.ab_internal_ql >= IMPORTANT_CONNECTOR_THRESHOLDS["ql"]
 
     @property
     def requires_high_test_strictness_level(self) -> bool:

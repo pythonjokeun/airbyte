@@ -146,14 +146,12 @@ async def test_incremental_two_sequential_reads(
             *build_messages_from_record_data("test_stream", records1),
             build_per_stream_state_message(descriptor=StreamDescriptor(name="test_stream"), stream_state={"date": latest_state}),
         ]
-        call_read_with_state_output_messages = build_messages_from_record_data("test_stream", records2)
     else:
         call_read_output_messages = [
             *build_messages_from_record_data("test_stream", records1),
             build_state_message({"date": latest_state}),
         ]
-        call_read_with_state_output_messages = build_messages_from_record_data("test_stream", records2)
-
+    call_read_with_state_output_messages = build_messages_from_record_data("test_stream", records2)
     docker_runner_mock = MagicMock()
     docker_runner_mock.call_read = mocker.AsyncMock(return_value=call_read_output_messages)
     docker_runner_mock.call_read_with_state = mocker.AsyncMock(return_value=call_read_with_state_output_messages)

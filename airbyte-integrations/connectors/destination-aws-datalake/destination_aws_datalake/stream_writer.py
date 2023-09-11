@@ -147,10 +147,7 @@ class StreamWriter:
 
         types = self._get_non_null_json_schema_types(types)
         # when multiple types, cast to string
-        if self._json_schema_type_has_mixed_types(types):
-            return "string"
-
-        return types[0]
+        return "string" if self._json_schema_type_has_mixed_types(types) else types[0]
 
     def _get_pandas_dtypes_from_json_schema(self, df: pd.DataFrame) -> Dict[str, str]:
         type_mapper = {
@@ -267,11 +264,12 @@ class StreamWriter:
             if airbyte_type and col_typ == "number" and airbyte_type == "integer":
                 col_typ = "integer"
 
-            if col_typ == "string" and col_format == "date-time":
-                result_typ = "timestamp"
+            if col_typ == "string":
+                if col_format == "date":
+                    result_typ = "date"
 
-            if col_typ == "string" and col_format == "date":
-                result_typ = "date"
+                elif col_format == "date-time":
+                    result_typ = "timestamp"
 
             if col_typ == "object":
                 properties = definition.get("properties")
@@ -367,7 +365,7 @@ class StreamWriter:
                 # Create date column for partitioning
                 if self._cursor_fields and col in self._cursor_fields:
                     fields = self._add_partition_column(col, df)
-                    partition_fields.update(fields)
+                    partition_fields |= fields
 
         dtype, json_casts = self._get_glue_dtypes_from_json_schema(self._schema)
         dtype = {**dtype, **partition_fields}

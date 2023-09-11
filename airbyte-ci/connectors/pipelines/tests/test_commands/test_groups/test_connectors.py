@@ -44,7 +44,7 @@ def test_get_selected_connectors_by_support_level_no_file_modification():
         modified_files=set(),
     )
 
-    set([c.support_level for c in selected_connectors]) == {"certified"}
+    {c.support_level for c in selected_connectors} == {"certified"}
 
 
 def test_get_selected_connectors_by_language_no_file_modification():
@@ -57,7 +57,7 @@ def test_get_selected_connectors_by_language_no_file_modification():
         modified_files=set(),
     )
 
-    set([c.language for c in selected_connectors]) == {ConnectorLanguage.LOW_CODE}
+    {c.language for c in selected_connectors} == {ConnectorLanguage.LOW_CODE}
 
 
 def test_get_selected_connectors_by_name_with_file_modification():

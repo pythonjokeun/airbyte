@@ -118,10 +118,9 @@ class Step(ABC):
     def logger(self) -> logging.Logger:
         if self.should_log:
             return logging.getLogger(f"{self.context.pipeline_name} - {self.title}")
-        else:
-            disabled_logger = logging.getLogger()
-            disabled_logger.disabled = True
-            return disabled_logger
+        disabled_logger = logging.getLogger()
+        disabled_logger.disabled = True
+        return disabled_logger
 
     @property
     def dagger_client(self) -> Container:
@@ -293,7 +292,11 @@ class PytestStep(Step, ABC):
         Returns:
             Tuple[StepStatus, Optional[str], Optional[str]]: Tuple of StepStatus, stderr and stdout.
         """
-        test_config = "pytest.ini" if await check_path_in_workdir(connector_under_test, "pytest.ini") else "/" + PYPROJECT_TOML_FILE_PATH
+        test_config = (
+            "pytest.ini"
+            if await check_path_in_workdir(connector_under_test, "pytest.ini")
+            else f"/{PYPROJECT_TOML_FILE_PATH}"
+        )
         if await check_path_in_workdir(connector_under_test, test_directory):
             tester = connector_under_test.with_exec(
                 [
@@ -372,7 +375,7 @@ class Report:
 
     @property
     def json_report_file_name(self) -> str:  # noqa D102
-        return self.filename + ".json"
+        return f"{self.filename}.json"
 
     @property
     def json_report_remote_storage_key(self) -> str:  # noqa D102
@@ -424,7 +427,7 @@ class Report:
             gcs_credentials=self.pipeline_context.ci_gcs_credentials_secret,
             flags=gcs_cp_flags,
         )
-        gcs_uri = "gs://" + self.pipeline_context.ci_report_bucket + "/" + remote_key
+        gcs_uri = f"gs://{self.pipeline_context.ci_report_bucket}/{remote_key}"
         public_url = f"{GCS_PUBLIC_DOMAIN}/{self.pipeline_context.ci_report_bucket}/{remote_key}"
         if report_upload_exit_code != 0:
             self.pipeline_context.logger.error(f"Uploading {local_path} to {gcs_uri} failed.")
@@ -519,7 +522,7 @@ class ConnectorReport(Report):
 
     @property
     def html_report_file_name(self) -> str:  # noqa D102
-        return self.filename + ".html"
+        return f"{self.filename}.html"
 
     @property
     def html_report_remote_storage_key(self) -> str:  # noqa D102

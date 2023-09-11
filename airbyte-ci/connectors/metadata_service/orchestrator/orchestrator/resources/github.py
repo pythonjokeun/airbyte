@@ -56,7 +56,7 @@ def github_connectors_directory(resource_context: InitResourceContext) -> List[C
     config_schema={"connectors_path": StringSource},
 )
 def github_connectors_metadata_files(resource_context: InitResourceContext) -> List[dict]:
-    resource_context.log.info(f"retrieving github metadata files")
+    resource_context.log.info("retrieving github metadata files")
 
     github_connector_repo = resource_context.resources.github_connector_repo
     repo_file_tree = github_connector_repo.get_git_tree("master", recursive=True).tree
@@ -66,7 +66,7 @@ def github_connectors_metadata_files(resource_context: InitResourceContext) -> L
         if _valid_metadata_file_path(github_file.path)
     ]
 
-    resource_context.log.info(f"finished retrieving github metadata files")
+    resource_context.log.info("finished retrieving github metadata files")
     return metadata_file_paths
 
 
@@ -99,6 +99,4 @@ def github_workflow_runs(resource_context: InitResourceContext) -> List[ContentF
         "GET", f"{github_connector_repo.url}/actions/workflows/{workflow_id}/runs", parameters=params
     )
 
-    workflow_runs = data.get("workflow_runs", [])
-
-    return workflow_runs
+    return data.get("workflow_runs", [])

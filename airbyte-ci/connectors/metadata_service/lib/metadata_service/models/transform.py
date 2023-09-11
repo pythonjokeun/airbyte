@@ -21,7 +21,7 @@ def _apply_default_pydantic_kwargs(kwargs: dict) -> dict:
         "exclude_none": True,  # Exclude fields that are None
     }
 
-    return {**default_kwargs, **kwargs}
+    return default_kwargs | kwargs
 
 
 def to_json_sanitized_dict(pydantic_model_obj: BaseModel, **kwargs) -> dict:

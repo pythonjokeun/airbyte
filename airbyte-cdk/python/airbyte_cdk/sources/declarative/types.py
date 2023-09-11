@@ -44,10 +44,7 @@ class Record(Mapping[str, Any]):
         return item in self._data
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, Record):
-            # noinspection PyProtectedMember
-            return self._data == other._data
-        return False
+        return self._data == other._data if isinstance(other, Record) else False
 
     def __ne__(self, other: object) -> bool:
         return not self.__eq__(other)

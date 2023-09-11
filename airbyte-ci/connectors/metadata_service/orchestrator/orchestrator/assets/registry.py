@@ -35,8 +35,9 @@ def persist_registry_to_json(
     registry_file_name = f"{registry_name}_registry"
     registry_json = registry.json(exclude_none=True)
 
-    file_handle = registry_directory_manager.write_data(registry_json.encode("utf-8"), ext="json", key=registry_file_name)
-    return file_handle
+    return registry_directory_manager.write_data(
+        registry_json.encode("utf-8"), ext="json", key=registry_file_name
+    )
 
 
 @sentry_sdk.trace
@@ -149,8 +150,7 @@ def latest_oss_registry(_context: OpExecutionContext, latest_oss_registry_dict: 
 def latest_cloud_registry_dict(context: OpExecutionContext) -> dict:
     oss_registry_file = context.resources.latest_cloud_registry_gcs_blob
     json_string = oss_registry_file.download_as_string().decode("utf-8")
-    oss_registry_dict = json.loads(json_string)
-    return oss_registry_dict
+    return json.loads(json_string)
 
 
 @asset(required_resource_keys={"latest_oss_registry_gcs_blob"}, group_name=GROUP_NAME)
@@ -158,5 +158,4 @@ def latest_cloud_registry_dict(context: OpExecutionContext) -> dict:
 def latest_oss_registry_dict(context: OpExecutionContext) -> dict:
     oss_registry_file = context.resources.latest_oss_registry_gcs_blob
     json_string = oss_registry_file.download_as_string().decode("utf-8")
-    oss_registry_dict = json.loads(json_string)
-    return oss_registry_dict
+    return json.loads(json_string)

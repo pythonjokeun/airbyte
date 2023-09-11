@@ -98,7 +98,7 @@ def test_simple_retriever_full(mock_http_stream):
     assert retriever._last_response == response
     assert retriever._records_from_last_response == records
 
-    [r for r in retriever.read_records(SyncMode.full_refresh)]
+    list(retriever.read_records(SyncMode.full_refresh))
     paginator.reset.assert_called()
 
 
@@ -129,7 +129,7 @@ def test_simple_retriever_with_request_response_logs(mock_http_stream):
         config={},
     )
 
-    actual_messages = [r for r in retriever.read_records(SyncMode.full_refresh)]
+    actual_messages = list(retriever.read_records(SyncMode.full_refresh))
     paginator.reset.assert_called()
 
     assert isinstance(actual_messages[0], AirbyteLogMessage)
@@ -174,7 +174,7 @@ def test_simple_retriever_with_request_response_log_last_records(mock_http_strea
     assert retriever._last_response == response
     assert retriever._records_from_last_response == request_response_logs
 
-    [r for r in retriever.read_records(SyncMode.full_refresh)]
+    list(retriever.read_records(SyncMode.full_refresh))
     paginator.reset.assert_called()
 
 
@@ -217,7 +217,7 @@ def test_get_request_options_from_pagination(test_name, paginator_mapping, strea
         RequestOptionType.body_json: retriever._request_body_json,
     }
 
-    for _, method in request_option_type_to_method.items():
+    for method in request_option_type_to_method.values():
         if expected_mapping is not None:
             actual_mapping = method(None, None, None)
             assert expected_mapping == actual_mapping
@@ -262,7 +262,7 @@ def test_get_request_headers(test_name, paginator_mapping, expected_mapping):
         RequestOptionType.header: retriever._request_headers,
     }
 
-    for _, method in request_option_type_to_method.items():
+    for method in request_option_type_to_method.values():
         if expected_mapping:
             actual_mapping = method(None, None, None)
             assert expected_mapping == actual_mapping

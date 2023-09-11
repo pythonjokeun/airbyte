@@ -119,5 +119,4 @@ class DocumentProcessor:
         return "_".join(primary_key)
 
     def _split_document(self, doc: Document) -> List[Document]:
-        chunks = self.splitter.split_documents([doc])
-        return chunks
+        return self.splitter.split_documents([doc])

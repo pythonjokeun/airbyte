@@ -206,7 +206,6 @@ discover_scenarios = [
 @pytest.mark.parametrize("scenario", discover_scenarios, ids=[s.name for s in discover_scenarios])
 def test_discover(capsys: CaptureFixture[str], tmp_path: PosixPath, scenario: TestScenario) -> None:
     expected_exc, expected_msg = scenario.expected_discover_error
-    expected_logs = scenario.expected_logs
     if expected_exc:
         with pytest.raises(expected_exc) as exc:
             discover(capsys, tmp_path, scenario)
@@ -216,7 +215,7 @@ def test_discover(capsys: CaptureFixture[str], tmp_path: PosixPath, scenario: Te
         output = discover(capsys, tmp_path, scenario)
         catalog, logs = output["catalog"], output["logs"]
         assert catalog == scenario.expected_catalog
-        if expected_logs:
+        if expected_logs := scenario.expected_logs:
             discover_logs = expected_logs.get("discover")
             logs = [log for log in logs if log.get("log", {}).get("level") in ("ERROR", "WARN")]
             _verify_expected_logs(logs, discover_logs)

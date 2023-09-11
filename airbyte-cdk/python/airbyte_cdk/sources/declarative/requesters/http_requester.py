@@ -186,7 +186,7 @@ class HttpRequester(Requester):
         """
         if self.error_handler is None:
             return response.status_code == 429 or 500 <= response.status_code < 600
-        return bool(self.interpret_response_status(response).action == ResponseAction.RETRY)
+        return self.interpret_response_status(response).action == ResponseAction.RETRY
 
     def _backoff_time(self, response: requests.Response) -> Optional[float]:
         """
@@ -342,7 +342,9 @@ class HttpRequester(Requester):
         query_string = urllib.parse.urlparse(url).query
         query_dict = {k: v[0] for k, v in urllib.parse.parse_qs(query_string).items()}
 
-        duplicate_keys_with_same_value = {k for k in query_dict.keys() if str(params.get(k)) == str(query_dict[k])}
+        duplicate_keys_with_same_value = {
+            k for k in query_dict if str(params.get(k)) == str(query_dict[k])
+        }
         return {k: v for k, v in params.items() if k not in duplicate_keys_with_same_value}
 
     @classmethod
@@ -470,8 +472,7 @@ class HttpRequester(Requester):
                 lambda: formatter(response),
             )
         if self._should_retry(response):
-            custom_backoff_time = self._backoff_time(response)
-            if custom_backoff_time:
+            if custom_backoff_time := self._backoff_time(response):
                 raise UserDefinedBackoffException(backoff=custom_backoff_time, request=request, response=response)
             else:
                 raise DefaultBackoffException(request=request, response=response)

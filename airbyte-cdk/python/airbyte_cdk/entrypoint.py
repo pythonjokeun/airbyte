@@ -113,7 +113,7 @@ class AirbyteEntrypoint(object):
 
                         yield from map(AirbyteEntrypoint.airbyte_message_to_string, self.read(source_spec, config, config_catalog, state))
                     else:
-                        raise Exception("Unexpected command " + cmd)
+                        raise Exception(f"Unexpected command {cmd}")
         finally:
             yield from [self.airbyte_message_to_string(queued_message) for queued_message in self._emit_queued_messages(self.source)]
 
@@ -122,8 +122,7 @@ class AirbyteEntrypoint(object):
         try:
             self.validate_connection(source_spec, config)
         except AirbyteTracedException as traced_exc:
-            connection_status = traced_exc.as_connection_status_message()
-            if connection_status:
+            if connection_status := traced_exc.as_connection_status_message():
                 yield from self._emit_queued_messages(self.source)
                 yield connection_status
                 return
@@ -177,16 +176,12 @@ class AirbyteEntrypoint(object):
     @classmethod
     def extract_catalog(cls, args: List[str]) -> Optional[Any]:
         parsed_args = cls.parse_args(args)
-        if hasattr(parsed_args, "catalog"):
-            return parsed_args.catalog
-        return None
+        return parsed_args.catalog if hasattr(parsed_args, "catalog") else None
 
     @classmethod
     def extract_config(cls, args: List[str]) -> Optional[Any]:
         parsed_args = cls.parse_args(args)
-        if hasattr(parsed_args, "config"):
-            return parsed_args.config
-        return None
+        return parsed_args.config if hasattr(parsed_args, "config") else None
 
     def _emit_queued_messages(self, source: Source) -> Iterable[AirbyteMessage]:
         if hasattr(source, "message_repository") and source.message_repository:

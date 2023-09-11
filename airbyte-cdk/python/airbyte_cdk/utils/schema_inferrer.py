@@ -65,10 +65,10 @@ class SchemaInferrer:
         Returns the JSON schemas for all encountered streams inferred by inspecting all records
         passed via the accumulate method
         """
-        schemas = {}
-        for stream_name, builder in self.stream_to_builder.items():
-            schemas[stream_name] = self._clean(builder.to_schema())
-        return schemas
+        return {
+            stream_name: self._clean(builder.to_schema())
+            for stream_name, builder in self.stream_to_builder.items()
+        }
 
     def _clean(self, node: InferredSchema) -> InferredSchema:
         """

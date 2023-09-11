@@ -25,12 +25,12 @@ RECORD_FLUSH_INTERVAL = 25000
 
 class DestinationAwsDatalake(Destination):
     def _flush_streams(self, streams: Dict[str, StreamWriter]) -> None:
-        for stream in streams:
-            streams[stream].flush()
+        for value in streams.values():
+            value.flush()
 
     @staticmethod
     def _get_random_string(length):
-        return "".join(random.choice(string.ascii_letters) for i in range(length))
+        return "".join(random.choice(string.ascii_letters) for _ in range(length))
 
     def write(
         self, config: Mapping[str, Any], configured_catalog: ConfiguredAirbyteCatalog, input_messages: Iterable[AirbyteMessage]

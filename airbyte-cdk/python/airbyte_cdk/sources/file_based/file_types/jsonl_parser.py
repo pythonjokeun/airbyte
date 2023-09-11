@@ -60,14 +60,12 @@ class JsonlParser(FileTypeParser):
 
     @classmethod
     def _infer_schema_for_record(cls, record: Dict[str, Any]) -> Dict[str, Any]:
-        record_schema = {}
-        for key, value in record.items():
-            if value is None:
-                record_schema[key] = {"type": "null"}
-            else:
-                record_schema[key] = {"type": PYTHON_TYPE_MAPPING[type(value)]}
-
-        return record_schema
+        return {
+            key: {"type": "null"}
+            if value is None
+            else {"type": PYTHON_TYPE_MAPPING[type(value)]}
+            for key, value in record.items()
+        }
 
     @property
     def file_read_mode(self) -> FileReadMode:

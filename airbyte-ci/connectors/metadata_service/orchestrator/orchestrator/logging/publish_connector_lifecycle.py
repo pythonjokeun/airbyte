@@ -51,10 +51,7 @@ class PublishConnectorLifecycle:
 
     @staticmethod
     def stage_to_log_level(stage_status: StageStatus) -> str:
-        if stage_status == StageStatus.FAILED:
-            return "error"
-        else:
-            return "info"
+        return "error" if stage_status == StageStatus.FAILED else "info"
 
     @staticmethod
     def create_log_message(
@@ -73,7 +70,6 @@ class PublishConnectorLifecycle:
         level = PublishConnectorLifecycle.stage_to_log_level(stage_status)
         log_method = getattr(context.log, level)
         log_method(message)
-        channel = os.getenv("PUBLISH_UPDATE_CHANNEL")
-        if channel:
+        if channel := os.getenv("PUBLISH_UPDATE_CHANNEL"):
             slack_message = f"🤖 {message}"
             send_slack_message(context, channel, slack_message)

@@ -120,8 +120,7 @@ class CsvParser(FileTypeParser):
         stream_reader: AbstractFileBasedStreamReader,
         logger: logging.Logger,
     ) -> SchemaType:
-        input_schema = config.get_input_schema()
-        if input_schema:
+        if input_schema := config.get_input_schema():
             return input_schema
 
         # todo: the existing InMemoryFilesSource.open_file() test source doesn't currently require an encoding, but actual
@@ -193,11 +192,14 @@ class CsvParser(FileTypeParser):
     def _to_nullable(
         row: Mapping[str, str], deduped_property_types: Mapping[str, str], null_values: Set[str], strings_can_be_null: bool
     ) -> Dict[str, Optional[str]]:
-        nullable = row | {
-            k: None if CsvParser._value_is_none(v, deduped_property_types.get(k), null_values, strings_can_be_null) else v
+        return row | {
+            k: None
+            if CsvParser._value_is_none(
+                v, deduped_property_types.get(k), null_values, strings_can_be_null
+            )
+            else v
             for k, v in row.items()
         }
-        return nullable
 
     @staticmethod
     def _value_is_none(value: Any, deduped_property_type: Optional[str], null_values: Set[str], strings_can_be_null: bool) -> bool:
@@ -289,7 +291,7 @@ class CsvParser(FileTypeParser):
 
         if warnings:
             logger.warning(
-                f"{FileBasedSourceError.ERROR_CASTING_VALUE.value}: {','.join([w for w in warnings])}",
+                f"{FileBasedSourceError.ERROR_CASTING_VALUE.value}: {','.join(list(warnings))}"
             )
         return result
 

@@ -14,7 +14,7 @@ from pydash.objects import get
 def check_migration_guide(connector: Connector) -> bool:
     """Check if a migration guide is available for the connector if a breaking change was introduced."""
 
-    breaking_changes = get(connector.metadata, f"releases.breakingChanges")
+    breaking_changes = get(connector.metadata, "releases.breakingChanges")
     if not breaking_changes:
         return True
 
@@ -27,10 +27,10 @@ def check_migration_guide(connector: Connector) -> bool:
 
     # Check that the migration guide begins with # {connector name} Migration Guide
     expected_title = f"# {connector.name_from_metadata} Migration Guide"
-    expected_version_header_start = f"## Upgrading to "
+    expected_version_header_start = "## Upgrading to "
     with open(migration_guide_file_path) as f:
         first_line = f.readline().strip()
-        if not first_line == expected_title:
+        if first_line != expected_title:
             print(
                 f"Migration guide file for {connector.technical_name} does not start with the correct header. Expected '{expected_title}', got '{first_line}'"
             )
@@ -55,7 +55,9 @@ def check_migration_guide(connector: Connector) -> bool:
 
         if ordered_breaking_changes != ordered_heading_versions:
             print(f"Migration guide file for {connector.name} has incorrect version headings.")
-            print(f"Check for missing, extra, or misordered headings, or headers with typos.")
+            print(
+                "Check for missing, extra, or misordered headings, or headers with typos."
+            )
             print(f"Expected headings: {ordered_expected_headings}")
             return False
 
@@ -144,8 +146,14 @@ def read_all_files_in_directory(
     ignored_filename_patterns = ignored_filename_patterns if ignored_filename_patterns is not None else {}
 
     for path in directory.rglob("*"):
-        ignore_directory = any([ignored_directory in path.parts for ignored_directory in ignored_directories])
-        ignore_filename = any([path.match(ignored_filename_pattern) for ignored_filename_pattern in ignored_filename_patterns])
+        ignore_directory = any(
+            ignored_directory in path.parts
+            for ignored_directory in ignored_directories
+        )
+        ignore_filename = any(
+            path.match(ignored_filename_pattern)
+            for ignored_filename_pattern in ignored_filename_patterns
+        )
         ignore = ignore_directory or ignore_filename
         if path.is_file() and not ignore:
             try:
@@ -271,7 +279,9 @@ def remove_strict_encrypt_suffix(connector_technical_name: str) -> str:
     for suffix in strict_encrypt_suffixes:
         if connector_technical_name.endswith(suffix):
             new_connector_technical_name = connector_technical_name.replace(suffix, "")
-            print("Checking connector " + new_connector_technical_name + " due to strict-encrypt")
+            print(
+                f"Checking connector {new_connector_technical_name} due to strict-encrypt"
+            )
             return new_connector_technical_name
     return connector_technical_name
 

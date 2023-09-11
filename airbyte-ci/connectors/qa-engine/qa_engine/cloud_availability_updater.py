@@ -110,7 +110,7 @@ def pr_already_created_for_branch(head_branch: str) -> bool:
 
 
 def add_labels_to_pr(pr_number: str, labels_to_add: List) -> requests.Response:
-    url = AIRBYTE_ISSUES_ENDPOINT + f"/{pr_number}/labels"
+    url = f"{AIRBYTE_ISSUES_ENDPOINT}/{pr_number}/labels"
     response = requests.post(url, headers=GITHUB_API_COMMON_HEADERS, json={"labels": labels_to_add})
     response.raise_for_status()
     logger.info(f"Labels {labels_to_add} added to PR {pr_number}")
@@ -178,8 +178,7 @@ def add_new_connector_to_cloud_catalog(airbyte_repo_path: Path, airbyte_repo: gi
     """
     metadata_file_path = get_metadata_file_path(airbyte_repo_path, connector)
 
-    updated_files = enable_in_cloud(connector, metadata_file_path)
-    if updated_files:
+    if updated_files := enable_in_cloud(connector, metadata_file_path):
         commit_all_files(airbyte_repo, f"🤖 Add {connector.connector_name} connector to cloud")
         return True
     return False
@@ -198,8 +197,9 @@ def batch_deploy_eligible_connectors_to_cloud_repo(eligible_connectors: Iterable
     added_connectors = []
     explicitly_disabled_connectors = []
     for connector in eligible_connectors:
-        added = add_new_connector_to_cloud_catalog(repo_path, airbyte_repo, connector)
-        if added:
+        if added := add_new_connector_to_cloud_catalog(
+            repo_path, airbyte_repo, connector
+        ):
             added_connectors.append(connector)
         else:
             explicitly_disabled_connectors.append(connector)

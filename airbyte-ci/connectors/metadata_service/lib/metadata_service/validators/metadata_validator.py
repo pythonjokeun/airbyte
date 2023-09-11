@@ -69,11 +69,14 @@ def validate_metadata_images_in_dockerhub(
     images_to_check = list(set(filter(lambda x: None not in x, possible_docker_images)))
 
     print(f"Checking that the following images are on dockerhub: {images_to_check}")
-    for image, version in images_to_check:
-        if not is_image_on_docker_hub(image, version):
-            return False, f"Image {image}:{version} does not exist in DockerHub"
-
-    return True, None
+    return next(
+        (
+            (False, f"Image {image}:{version} does not exist in DockerHub")
+            for image, version in images_to_check
+            if not is_image_on_docker_hub(image, version)
+        ),
+        (True, None),
+    )
 
 
 def validate_at_least_one_language_tag(
@@ -81,7 +84,7 @@ def validate_at_least_one_language_tag(
 ) -> ValidationResult:
     """Ensure that there is at least one tag in the data.tags field that matches language:<LANG>."""
     tags = get(metadata_definition, "data.tags", [])
-    if not any([tag.startswith("language:") for tag in tags]):
+    if not any(tag.startswith("language:") for tag in tags):
         return False, "At least one tag must be of the form language:<LANG>"
 
     return True, None
@@ -92,11 +95,14 @@ def validate_all_tags_are_keyvalue_pairs(
 ) -> ValidationResult:
     """Ensure that all tags are of the form <KEY>:<VALUE>."""
     tags = get(metadata_definition, "data.tags", [])
-    for tag in tags:
-        if ":" not in tag:
-            return False, f"Tag {tag} is not of the form <KEY>:<VALUE>"
-
-    return True, None
+    return next(
+        (
+            (False, f"Tag {tag} is not of the form <KEY>:<VALUE>")
+            for tag in tags
+            if ":" not in tag
+        ),
+        (True, None),
+    )
 
 
 def is_major_version(version: str) -> bool:

@@ -200,9 +200,7 @@ class DatetimeBasedCursor(Cursor):
         """
         :return Parses an ISO 8601 durations into datetime.timedelta or Duration objects.
         """
-        if not time_str:
-            return datetime.timedelta(0)
-        return parse_duration(time_str)
+        return datetime.timedelta(0) if not time_str else parse_duration(time_str)
 
     def get_request_params(
         self,

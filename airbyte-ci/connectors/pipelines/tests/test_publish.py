@@ -110,7 +110,7 @@ class TestUploadSpecToCache:
             assert step_result.status == StepStatus.FAILURE
             assert step_result.stdout == "upload_to_gcs_stdout"
             assert step_result.stderr == "upload_to_gcs_stderr"
-        if (not valid_spec and successful_upload) or (not valid_spec and not successful_upload):
+        if not valid_spec and successful_upload or not valid_spec:
             assert step_result.status == StepStatus.FAILURE
             assert step_result.stderr == "Invalid spec."
             assert step_result.stdout is None
@@ -315,7 +315,7 @@ async def test_run_connector_publish_pipeline_when_image_does_not_exist(
             assert len(report.steps_results) == len(context.report.steps_results)
 
             previous_steps = steps_to_run[:i]
-            for _, step_ran in enumerate(previous_steps):
+            for step_ran in previous_steps:
                 step_ran.assert_called_once()
                 step_ran.return_value
 
